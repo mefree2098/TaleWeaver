@@ -33,7 +33,7 @@ class OpenAIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let requestBody: [String: Any] = [
-            "model": "gpt-4",
+            "model": "o4-mini",
             "messages": [
                 ["role": "system", "content": "You are a creative storyteller."],
                 ["role": "user", "content": prompt]
