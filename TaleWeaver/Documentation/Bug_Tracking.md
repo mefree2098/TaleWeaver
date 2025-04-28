@@ -17,6 +17,13 @@
 - Impact: Users cannot easily track which characters appear in which stories
 - Priority: Medium
 
+## Known Issues
+- Character Customization Integration
+  - Status: Resolved
+  - Description: Character customization functionality needed to be integrated into SettingsView
+  - Solution: Added CharacterListView and CharacterEditorView navigation from SettingsView
+  - Prevention: Keep UI components modular and maintain clear navigation hierarchy
+
 ## Resolved Issues
 
 ### StoryTemplate Entity Duplication

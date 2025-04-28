@@ -1,8 +1,16 @@
 import SwiftUI
+import CoreData
 
 struct SettingsView: View {
     @AppStorage("openAIAPIKey") private var apiKey: String = ""
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var characterViewModel: CharacterViewModel
+    @State private var showingCharacterEditor = false
+    
+    init() {
+        let context = PersistenceController.shared.container.viewContext
+        _characterViewModel = StateObject(wrappedValue: CharacterViewModel(context: context))
+    }
     
     var body: some View {
         NavigationView {
@@ -12,6 +20,16 @@ struct SettingsView: View {
                         .textContentType(.password)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
+                }
+                
+                Section(header: Text("Character Customization")) {
+                    NavigationLink(destination: CharacterListView(viewModel: characterViewModel)) {
+                        Label("Manage Characters", systemImage: "person.2")
+                    }
+                    
+                    Button(action: { showingCharacterEditor = true }) {
+                        Label("Create New Character", systemImage: "person.badge.plus")
+                    }
                 }
                 
                 Section(header: Text("About")) {
@@ -31,6 +49,9 @@ struct SettingsView: View {
                         dismiss()
                     }
                 }
+            }
+            .sheet(isPresented: $showingCharacterEditor) {
+                CharacterEditorView(viewModel: characterViewModel)
             }
         }
     }
