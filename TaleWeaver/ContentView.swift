@@ -6,16 +6,23 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct ContentView: View {
+    let persistenceController = PersistenceController.shared
+    
+    // Create the view model
+    @StateObject private var viewModel: StoryViewModel
+    
+    init() {
+        let repository = StoryRepository(context: persistenceController.container.viewContext)
+        let openAIService = OpenAIService(apiKey: Configuration.openAIAPIKey)
+        _viewModel = StateObject(wrappedValue: StoryViewModel(repository: repository, openAIService: openAIService))
+    }
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        StoryListView(viewModel: viewModel)
+            .environment(\.managedObjectContext, persistenceController.container.viewContext)
     }
 }
 
