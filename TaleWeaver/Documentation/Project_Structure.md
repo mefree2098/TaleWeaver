@@ -123,6 +123,10 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - Supports prompt preview
 
 ### Components
+- `CharacterRow.swift`: Reusable component for displaying character information
+  - Shows character avatar and details
+  - Handles both local and remote image URLs
+  - Provides consistent styling for character rows
 - `FullScreenImageView.swift`: Displays images in full screen
   - Handles image loading and display
   - Provides zoom and pan functionality

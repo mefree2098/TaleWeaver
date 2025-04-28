@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+do not add image picker function anywhere in this app
+do not use a different model than gpt-image-1 for image generation
+always permanantly store generated images with their associated resource

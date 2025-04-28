@@ -11,6 +11,19 @@
 
 ## Active Issues
 
+### CharacterRow Redeclaration
+- Status: Resolved
+- Description: Invalid redeclaration of 'CharacterRow' in both CharacterListView.swift and CharacterRow.swift
+- Impact: Build failed due to duplicate struct definitions
+- Solution: 
+  1. Removed the duplicate CharacterRow struct definition from CharacterListView.swift
+  2. Kept the standalone CharacterRow component in CharacterRow.swift
+  3. Updated CharacterListView to use the standalone CharacterRow component
+- Prevention: 
+  1. Avoid duplicate view declarations across the codebase
+  2. Keep UI components modular and in separate files
+  3. Document component dependencies clearly
+
 ### Character-Story Relationship Management
 - Status: Resolved
 - Description: Limited functionality for managing relationships between characters and stories
