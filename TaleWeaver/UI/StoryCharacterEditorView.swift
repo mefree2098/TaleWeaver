@@ -42,7 +42,8 @@ struct StoryCharacterEditorViewNew: View {
             _avatarURL = State(initialValue: character.avatarURL ?? "")
             _intelligence = State(initialValue: character.intelligence)
         } else {
-            print("Initializing new character")
+            print("Initializing for new character")
+            // Initialize with empty values for new character
             _name = State(initialValue: "")
             _description = State(initialValue: "")
             _avatarURL = State(initialValue: "")
@@ -53,46 +54,14 @@ struct StoryCharacterEditorViewNew: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Character Details")) {
+                Section(header: Text("Basic Information")) {
                     TextField("Name", text: $name)
-                        .onChange(of: name) { oldValue, newValue in
-                            print("Name updated to: '\(newValue)'")
-                        }
-                    TextEditor(text: $description)
-                        .frame(minHeight: 100, maxHeight: 200)
-                        .onChange(of: description) { oldValue, newValue in
-                            // Only log if the change is due to a completed word or punctuation
-                            if newValue.last?.isWhitespace == true || newValue.last?.isPunctuation == true {
-                                print("Description updated to: '\(newValue)'")
-                            }
-                        }
+                    TextField("Description", text: $description)
                 }
                 
-                Section(header: Text("Character Traits")) {
-                    VStack(alignment: .leading) {
-                        HStack {
-                            Text("Intelligence")
-                            Spacer()
-                            Text("\(intelligence)")
-                                .foregroundColor(.secondary)
-                        }
-                        Slider(value: Binding(
-                            get: { Double(intelligence) },
-                            set: { intelligence = Int16($0) }
-                        ), in: 1...10, step: 1)
-                        .accentColor(intelligenceColor)
-                        .onChange(of: intelligence) { oldValue, newValue in
-                            // Only log if there's an actual change in the integer value
-                            if oldValue != newValue {
-                                print("Intelligence level changed to: \(newValue)")
-                            }
-                        }
-                    }
-                }
-                
-                Section(header: Text("Avatar")) {
+                Section(header: Text("Character Image")) {
                     if !avatarURL.isEmpty {
-                        AsyncImage(url: URLUtils.createURL(from: avatarURL)) { phase in
+                        AsyncImage(url: URL(string: avatarURL.hasPrefix("http") ? avatarURL : "file://\(avatarURL)")) { phase in
                             switch phase {
                             case .empty:
                                 ProgressView()
@@ -101,35 +70,57 @@ struct StoryCharacterEditorViewNew: View {
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(height: 200)
-                                    .cornerRadius(10)
+                                    .onTapGesture {
+                                        showingFullScreenImage = true
+                                    }
                             case .failure:
-                                Image(systemName: "person.crop.rectangle.fill")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(height: 200)
-                                    .foregroundColor(.gray)
+                                Text("Failed to load image")
+                                    .foregroundColor(.red)
                             @unknown default:
                                 EmptyView()
                             }
                         }
                     } else {
-                        Image(systemName: "person.crop.rectangle.fill")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(height: 200)
+                        Text("No image available")
                             .foregroundColor(.gray)
                     }
                     
-                    Button("Generate Avatar") {
+                    Button(action: {
                         generateAvatar()
+                    }) {
+                        Label("Generate Avatar", systemImage: "wand.and.stars")
                     }
-                    .disabled(isGeneratingAvatar || name.isEmpty)
-                    
-                    if isGeneratingAvatar {
-                        ProgressView()
+                    .disabled(description.isEmpty || isGeneratingAvatar)
+                }
+                
+                Section(header: Text("Intelligence Level")) {
+                    VStack {
+                        HStack {
+                            Text("Intelligence: \(intelligence)")
+                            Spacer()
+                            Text(intelligenceText)
+                                .foregroundColor(intelligenceColor)
+                        }
+                        
+                        Slider(value: Binding(
+                            get: { Double(intelligence) },
+                            set: { intelligence = Int16($0) }
+                        ), in: 1...10, step: 1)
                     }
-                    
-                    if let error = errorMessage {
+                }
+                
+                if isGeneratingAvatar {
+                    Section {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                    }
+                }
+                
+                if let error = errorMessage {
+                    Section {
                         Text(error)
                             .foregroundColor(.red)
                             .font(.caption)
@@ -150,7 +141,7 @@ struct StoryCharacterEditorViewNew: View {
                 }
             }
             .sheet(isPresented: $showingFullScreenImage) {
-                if let url = URL(string: avatarURL) {
+                if let url = URL(string: avatarURL.hasPrefix("http") ? avatarURL : "file://\(avatarURL)") {
                     FullScreenImageView(imageURL: url)
                 }
             }
@@ -171,6 +162,20 @@ struct StoryCharacterEditorViewNew: View {
                     print("- intelligence: \(character.intelligence)")
                     print("- isUserCharacter: \(character.isUserCharacter)")
                     print("- stories count: \(character.stories?.count ?? 0)")
+                    
+                    // Ensure state is properly initialized with character data
+                    if name.isEmpty && character.name != nil {
+                        name = character.name ?? ""
+                    }
+                    if description.isEmpty && character.characterDescription != nil {
+                        description = character.characterDescription ?? ""
+                    }
+                    if avatarURL.isEmpty && character.avatarURL != nil {
+                        avatarURL = character.avatarURL ?? ""
+                    }
+                    if intelligence == 5 && character.intelligence != 5 {
+                        intelligence = character.intelligence
+                    }
                 } else {
                     print("No character data available")
                 }
@@ -193,8 +198,25 @@ struct StoryCharacterEditorViewNew: View {
         }
     }
     
+    private var intelligenceText: String {
+        switch intelligence {
+        case 1...3:
+            return "Low"
+        case 4...6:
+            return "Medium"
+        case 7...8:
+            return "High"
+        case 9...10:
+            return "Very High"
+        default:
+            return "Unknown"
+        }
+    }
+    
     private func generateAvatar() {
         isGeneratingAvatar = true
+        errorMessage = nil
+        
         Task {
             do {
                 let characterId = character?.id?.uuidString ?? UUID().uuidString
@@ -202,25 +224,22 @@ struct StoryCharacterEditorViewNew: View {
                     description: description,
                     characterId: characterId
                 )
+                
                 await MainActor.run {
                     avatarURL = url
                     isGeneratingAvatar = false
                 }
             } catch {
                 print("Error generating avatar: \(error)")
-                isGeneratingAvatar = false
+                await MainActor.run {
+                    errorMessage = "Failed to generate avatar: \(error.localizedDescription)"
+                    isGeneratingAvatar = false
+                }
             }
         }
     }
     
     private func saveCharacter() {
-        print("Saving character")
-        print("Current state before save:")
-        print("- name: '\(name)'")
-        print("- description: '\(description)'")
-        print("- avatarURL: '\(avatarURL)'")
-        print("- intelligence: \(intelligence)")
-        
         if let existingCharacter = character {
             print("Updating existing character")
             print("Character before update:")

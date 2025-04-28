@@ -9,6 +9,8 @@ struct StoryCharacterListView: View {
     @State private var searchText = ""
     @State private var selectedCharacter: Character?
     @State private var showingCharacterEditor = false
+    @State private var refreshID = UUID()
+    @State private var showingDeleteConfirmation = false
     
     private var filteredCharacters: [Character] {
         let characters = story.characters?.allObjects as? [Character] ?? []
@@ -133,8 +135,10 @@ struct StoryCharacterListView: View {
                             .foregroundColor(.blue)
                         }
                     }
+                    .onDelete(perform: deleteCharacters)
                 }
             }
+            .id(refreshID)
             .searchable(text: $searchText, prompt: "Search characters")
             .navigationTitle("Characters")
             .navigationBarTitleDisplayMode(.inline)
@@ -153,8 +157,23 @@ struct StoryCharacterListView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingCharacterEditor) {
+            .sheet(isPresented: $showingCharacterEditor, onDismiss: {
+                refreshID = UUID()
+            }) {
                 StoryCharacterEditorViewNew(character: selectedCharacter, story: story)
+                    .environment(\.managedObjectContext, viewContext)
+            }
+            .alert("Delete Character", isPresented: $showingDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {
+                    selectedCharacter = nil
+                }
+                Button("Delete", role: .destructive) {
+                    if let character = selectedCharacter {
+                        deleteCharacter(character)
+                    }
+                }
+            } message: {
+                Text("Are you sure you want to delete this character? This action cannot be undone and may break any stories associated with this character.")
             }
         }
     }
@@ -164,6 +183,8 @@ struct StoryCharacterListView: View {
         stories.add(story)
         character.stories = stories
         try? viewContext.save()
+        
+        refreshID = UUID()
     }
     
     private func removeCharacter(_ character: Character) {
@@ -171,6 +192,32 @@ struct StoryCharacterListView: View {
         stories.remove(story)
         character.stories = stories
         try? viewContext.save()
+        
+        refreshID = UUID()
+    }
+    
+    private func deleteCharacters(at offsets: IndexSet) {
+        let charactersToDelete = offsets.map { filteredCharacters[$0] }
+        
+        for character in charactersToDelete {
+            selectedCharacter = character
+            showingDeleteConfirmation = true
+        }
+    }
+    
+    private func deleteCharacter(_ character: Character) {
+        let stories = character.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
+        stories.remove(story)
+        character.stories = stories
+        
+        viewContext.delete(character)
+        
+        do {
+            try viewContext.save()
+            refreshID = UUID()
+        } catch {
+            print("Error deleting character: \(error)")
+        }
     }
 }
 

@@ -432,6 +432,50 @@
 - **Solution**: Updated OpenAIService to properly handle API key
 - **Prevention**: Added proper error handling and key management
 
+### StoryCharacterListView Refresh Issues
+- **Status**: Resolved
+- **Description**: The StoryCharacterListView was not refreshing when characters were assigned/removed or when a new character was created
+- **Impact**: High - Users couldn't see changes immediately after making them
+- **Solution**: 
+  1. Added a refreshID state variable to force view updates
+  2. Updated the assignCharacter and removeCharacter functions to refresh the view
+  3. Added onDismiss handler to the character editor sheet to refresh the view
+  4. Added proper environment context to the character editor sheet
+- **Prevention**: 
+  1. Always use a refresh mechanism for views that need to update when data changes
+  2. Ensure proper environment context propagation in sheet presentations
+  3. Test UI updates after data changes
+
+### StoryCharacterEditorViewNew Data Loading Issues
+- **Status**: Resolved
+- **Description**: The StoryCharacterEditorViewNew was not properly loading existing character data
+- **Impact**: High - Users couldn't edit existing characters
+- **Solution**: 
+  1. Fixed the initializer to properly set state variables based on character data
+  2. Added additional checks in onAppear to ensure state is properly initialized
+  3. Improved error handling for avatar generation
+  4. Enhanced the UI with better feedback for intelligence levels
+- **Prevention**: 
+  1. Always ensure proper state initialization in view initializers
+  2. Add additional checks in onAppear to ensure state is properly set
+  3. Test character editing flow thoroughly
+  4. Document character management patterns
+
+### Story Character Deletion
+- **Status**: Implemented
+- **Description**: Added ability to delete story characters with confirmation
+- **Impact**: Medium
+- **Solution**: 
+  1. Added onDelete modifier to the story characters list
+  2. Implemented deleteCharacter function to remove character from story and delete it
+  3. Added confirmation alert with warning about potential story impact
+  4. Ensured view refreshes after deletion
+- **Prevention**: 
+  1. Always provide confirmation for destructive actions
+  2. Ensure proper cleanup of relationships before deletion
+  3. Test deletion flow thoroughly
+  4. Document deletion patterns
+
 ## Best Practices
 
 ### Core Data
