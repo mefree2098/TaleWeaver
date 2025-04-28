@@ -23,7 +23,7 @@ struct SettingsView: View {
                 }
                 
                 Section(header: Text("User Character")) {
-                    NavigationLink(destination: UserCharacterListView(viewModel: characterViewModel)) {
+                    NavigationLink(destination: UserCharacterListView()) {
                         Label("Manage User Character", systemImage: "person")
                     }
                     
@@ -58,51 +58,59 @@ struct SettingsView: View {
 }
 
 struct UserCharacterListView: View {
-    @ObservedObject var viewModel: CharacterViewModel
-    @State private var showingAddCharacter = false
-    @State private var searchText = ""
+    @Environment(\.managedObjectContext) private var viewContext
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Character.name, ascending: true)],
+        animation: .default)
+    private var characters: FetchedResults<Character>
+    
+    @State private var characterToDelete: Character?
+    @State private var showingDeleteConfirmation = false
     
     var body: some View {
         List {
-            ForEach(filteredCharacters) { character in
-                NavigationLink(destination: CharacterEditorView(viewModel: viewModel, character: character)) {
+            ForEach(characters) { character in
+                NavigationLink(destination: UserCharacterEditorViewNew(character: character)) {
                     CharacterRow(character: character)
                 }
             }
-            .onDelete(perform: deleteCharacters)
+            .onDelete { indexSet in
+                guard let index = indexSet.first else { return }
+                characterToDelete = characters[index]
+                showingDeleteConfirmation = true
+            }
         }
-        .navigationTitle("User Character")
+        .navigationTitle("My Characters")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    showingAddCharacter = true
-                }) {
-                    Label("Add Character", systemImage: "plus")
+                NavigationLink(destination: UserCharacterEditorViewNew()) {
+                    Image(systemName: "plus")
                 }
-                .accessibilityLabel("Add new user character")
             }
         }
-        .searchable(text: $searchText, prompt: "Search characters")
-        .sheet(isPresented: $showingAddCharacter) {
-            UserCharacterEditorViewNew()
+        .alert("Delete Character", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {
+                characterToDelete = nil
+            }
+            Button("Delete", role: .destructive) {
+                if let character = characterToDelete {
+                    deleteCharacter(character)
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete this character? This action cannot be undone.")
         }
     }
     
-    private var filteredCharacters: [Character] {
-        if searchText.isEmpty {
-            return viewModel.userCharacters
-        } else {
-            return viewModel.userCharacters.filter { character in
-                character.name?.localizedCaseInsensitiveContains(searchText) ?? false ||
-                character.characterDescription?.localizedCaseInsensitiveContains(searchText) ?? false
+    private func deleteCharacter(_ character: Character) {
+        withAnimation {
+            viewContext.delete(character)
+            do {
+                try viewContext.save()
+            } catch {
+                let nsError = error as NSError
+                print("Error deleting character: \(nsError), \(nsError.userInfo)")
             }
-        }
-    }
-    
-    private func deleteCharacters(at offsets: IndexSet) {
-        for index in offsets {
-            let character = filteredCharacters[index]
-            viewModel.deleteCharacter(character)
         }
     }
 }

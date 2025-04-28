@@ -9,10 +9,10 @@ struct UserCharacterEditorViewNew: View {
     @State private var name = ""
     @State private var description = ""
     @State private var avatarURL = ""
-    @State private var showingImagePicker = false
     @State private var showingFullScreenImage = false
-    @State private var selectedImage: UIImage?
     @State private var isGeneratingAvatar = false
+    @State private var showingDeleteConfirmation = false
+    @State private var errorMessage: String?
     
     var character: Character?
     
@@ -31,15 +31,7 @@ struct UserCharacterEditorViewNew: View {
                 }
                 
                 Section(header: Text("Avatar")) {
-                    if let image = selectedImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 200)
-                            .onTapGesture {
-                                showingFullScreenImage = true
-                            }
-                    } else if !avatarURL.isEmpty {
+                    if !avatarURL.isEmpty {
                         AsyncImage(url: URLUtils.createURL(from: avatarURL)) { phase in
                             switch phase {
                             case .empty:
@@ -62,17 +54,29 @@ struct UserCharacterEditorViewNew: View {
                         }
                     }
                     
-                    HStack {
-                        Button("Select Image") {
-                            showingImagePicker = true
+                    Button("Generate Avatar") {
+                        generateAvatar()
+                    }
+                    .disabled(isGeneratingAvatar || name.isEmpty)
+                    
+                    if isGeneratingAvatar {
+                        ProgressView()
+                    }
+                    
+                    if let error = errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
+                
+                if character != nil {
+                    Section {
+                        Button(role: .destructive) {
+                            showingDeleteConfirmation = true
+                        } label: {
+                            Label("Delete Character", systemImage: "trash")
                         }
-                        
-                        Spacer()
-                        
-                        Button("Generate Avatar") {
-                            generateAvatar()
-                        }
-                        .disabled(isGeneratingAvatar)
                     }
                 }
             }
@@ -89,13 +93,18 @@ struct UserCharacterEditorViewNew: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(image: $selectedImage)
-            }
             .sheet(isPresented: $showingFullScreenImage) {
-                if let url = URL(string: avatarURL) {
+                if let url = URLUtils.createURL(from: avatarURL) {
                     FullScreenImageView(imageURL: url)
                 }
+            }
+            .alert("Delete Character", isPresented: $showingDeleteConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    deleteCharacter()
+                }
+            } message: {
+                Text("Are you sure you want to delete this character? This action cannot be undone and may break any stories associated with this character.")
             }
             .onAppear {
                 if let character = character {
@@ -122,7 +131,10 @@ struct UserCharacterEditorViewNew: View {
                 }
             } catch {
                 print("Error generating avatar: \(error)")
-                isGeneratingAvatar = false
+                await MainActor.run {
+                    errorMessage = "Failed to generate avatar: \(error.localizedDescription)"
+                    isGeneratingAvatar = false
+                }
             }
         }
     }
@@ -147,6 +159,27 @@ struct UserCharacterEditorViewNew: View {
             dismiss()
         } catch {
             print("Error saving character: \(error)")
+            errorMessage = "Failed to save character: \(error.localizedDescription)"
+        }
+    }
+    
+    private func deleteCharacter() {
+        guard let character = character else { return }
+        
+        // Delete the character avatar if it exists
+        if let characterId = character.id?.uuidString {
+            try? OpenAIService.shared.deleteCharacterAvatar(characterId: characterId)
+        }
+        
+        // Delete the character from Core Data
+        viewContext.delete(character)
+        
+        do {
+            try viewContext.save()
+            dismiss()
+        } catch {
+            print("Error deleting character: \(error)")
+            errorMessage = "Failed to delete character: \(error.localizedDescription)"
         }
     }
 } 
