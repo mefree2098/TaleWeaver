@@ -22,11 +22,52 @@
 - Prevention: Maintain clear separation between user and story-specific data
 
 ## Known Issues
-- Character Customization Integration
-  - Status: Resolved
-  - Description: Character customization functionality needed to be integrated into SettingsView
-  - Solution: Added CharacterListView and CharacterEditorView navigation from SettingsView
-  - Prevention: Keep UI components modular and maintain clear navigation hierarchy
+
+### Character Management
+- Status: Resolved
+- Description: Character customization functionality needed to be integrated into SettingsView
+- Solution: Added navigation from SettingsView to CharacterListView and CharacterEditorView
+- Prevention: Keep UI components modular and maintain clear navigation hierarchy
+
+### Image Handling
+- Status: Resolved
+- Description: Character avatars needed full-screen viewing capability
+- Solution: Implemented FullScreenImageView with zoom and pan functionality
+- Prevention: Consider image viewing requirements when designing UI components
+
+### Core Data Relationships
+- Status: Pending
+- Description: Core Data relationship warnings for Story.prompts and StoryPrompt.story
+- Solution: Need to properly configure inverse relationships
+- Prevention: Always set up proper inverse relationships in Core Data model
+
+### Character Name Updates
+- Status: Resolved
+- Description: Character name changes not reflected in story content
+- Solution: Implemented name update propagation through story content
+- Prevention: Track variable references in content and update accordingly
+
+### Image Generation
+- Status: Known Issue
+- Description: OpenAI API rate limits for image generation
+- Solution: Implement caching and rate limiting
+- Prevention: Add proper error handling and user feedback
+
+### Build Errors in Character Views
+- Status: Resolved
+- Description: Multiple build errors in StoryCharacterEditorView and UserCharacterEditorView
+- Impact: Build failed due to invalid redeclarations, missing parameters, and incorrect relationships
+- Solution: 
+  1. Created new view files with different names to avoid redeclaration conflicts
+  2. Fixed CharacterViewModel initialization to include required context parameter
+  3. Corrected relationship handling between Character and Story entities
+  4. Added missing ImagePicker component
+  5. Added shared instance to OpenAIService
+- Prevention: 
+  1. Avoid duplicate view declarations across the codebase
+  2. Ensure proper initialization of ViewModels with required parameters
+  3. Verify Core Data relationships match the model definition
+  4. Document component dependencies clearly
 
 ## Resolved Issues
 
@@ -141,6 +182,24 @@
   3. Test character editing flow thoroughly
   4. Document component dependencies clearly
 
+### Character Management Integration
+- Status: Resolved
+- Description: Character management needed to be separated between user and story characters
+- Solution: Implemented distinct views and logic for user vs. story characters
+- Prevention: Consider data model relationships when designing features
+
+### Image Caching
+- Status: Resolved
+- Description: Character avatars were being reloaded unnecessarily
+- Solution: Implemented ImageCache service
+- Prevention: Always implement proper caching for network resources
+
+### Navigation Flow
+- Status: Resolved
+- Description: Character management navigation was unclear
+- Solution: Reorganized navigation to separate user and story character management
+- Prevention: Maintain clear and intuitive navigation hierarchy
+
 ## Best Practices
 
 ### Core Data
@@ -195,3 +254,25 @@
 - Character management
 - Story generation
 - Accessibility testing 
+
+## Future Considerations
+
+### Performance Optimization
+- Need to monitor image loading and caching performance
+- Consider implementing lazy loading for character lists
+- Optimize Core Data fetch requests
+
+### Error Handling
+- Improve error messages for image generation failures
+- Add retry mechanisms for failed API calls
+- Implement better offline support
+
+### User Experience
+- Add loading indicators for image operations
+- Improve feedback for character name updates
+- Enhance image viewing experience
+
+### Data Management
+- Consider implementing data versioning
+- Add data migration support
+- Implement backup and restore functionality 

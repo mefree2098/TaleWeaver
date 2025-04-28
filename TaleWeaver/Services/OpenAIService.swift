@@ -8,6 +8,8 @@ enum OpenAIError: Error {
 }
 
 class OpenAIService {
+    static let shared = OpenAIService(apiKey: UserDefaults.standard.string(forKey: "openAIAPIKey") ?? "")
+    
     private let apiKey: String
     private let baseURL = "https://api.openai.com/v1"
     private let session: URLSession
@@ -58,7 +60,7 @@ class OpenAIService {
         
         let requestBody: [String: Any] = [
             "model": "dall-e-3",
-            "prompt": "Create a portrait of a character with the following description: \(description). Style: digital art, clean lines, vibrant colors.",
+            "prompt": "Create a full-body portrait of a character with the following description: \(description). Style: digital art, clean lines, vibrant colors, full body shot from head to toe, centered composition.",
             "n": 1,
             "size": "1024x1024"
         ]

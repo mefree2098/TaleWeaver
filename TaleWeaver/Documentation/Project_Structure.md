@@ -14,24 +14,30 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
     - isUserCharacter: Boolean flag to distinguish between user characters and story characters
 
 ### Models
-- Story+Extensions.swift: Extensions for Story entity
-  - promptsArray: Computed property to access sorted prompts
-- StoryTemplate+CoreDataClass.swift: Core Data class for StoryTemplate entity
-- StoryTemplate+CoreDataProperties.swift: Core Data properties for StoryTemplate entity
+- `Character.swift`: Core Data entity for managing characters
+  - Attributes: id, name, characterDescription, avatarURL, isUserCharacter
+  - Relationships: story (to Story)
+- `Story.swift`: Core Data entity for managing stories
+  - Attributes: id, title, content, createdAt, updatedAt
+  - Relationships: prompts (to StoryPrompt), characters (to Character)
+- `StoryPrompt.swift`: Core Data entity for managing story prompts
+  - Attributes: id, content, createdAt
+  - Relationships: story (to Story)
+- `StoryTemplate.swift`: Core Data entity for managing story templates
+  - Attributes: id, name, description, content
+  - Relationships: stories (to Story)
 
 ### ViewModels
-- StoryViewModel.swift: Manages story data and business logic
-  - Dependencies: StoryRepository, OpenAIService
-  - Handles story CRUD operations
-  - Manages async operations for story generation
-- CharacterViewModel.swift: Manages character data and business logic
-  - Handles character CRUD operations
-  - Distinguishes between user characters and story characters
-  - Updates character names throughout stories when changed
-- TemplateViewModel.swift: Manages story templates
-  - Handles template loading and selection
-  - Generates prompts from templates
-  - Manages template persistence
+- `CharacterViewModel.swift`: Manages character data and business logic
+  - Handles CRUD operations for characters
+  - Manages user vs. story character distinction
+  - Updates character names throughout stories
+- `StoryViewModel.swift`: Manages story data and business logic
+  - Handles CRUD operations for stories
+  - Manages story prompts and templates
+- `TemplateViewModel.swift`: Manages template data and business logic
+  - Handles CRUD operations for templates
+  - Manages template selection and application
 
 ### Views
 - StoryListView.swift: Main view displaying list of stories
@@ -45,10 +51,26 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
 - CharacterListView.swift: Displays list of characters with search functionality
 - CharacterDetailView.swift: Shows detailed character information and associated stories
 - SettingsView.swift: Displays app settings, API key configuration, and user character management
-- UserCharacterListView.swift: Displays list of user characters
-- UserCharacterEditorView.swift: Handles user character creation and editing
-- StoryCharacterListView.swift: Displays and manages characters for a specific story
-- StoryCharacterEditorView.swift: Handles story character creation and editing
+- `UserCharacterListView.swift`: Displays and manages user characters
+  - Shows list of user characters
+  - Allows searching and filtering
+  - Provides navigation to character editor
+- `UserCharacterEditorView.swift`: Creates and edits user characters
+  - Manages character details and avatar
+  - Integrates with FullScreenImageView
+  - Handles image selection and generation
+- `StoryCharacterListView.swift`: Displays and manages story characters
+  - Shows list of characters for a specific story
+  - Allows searching and filtering
+  - Provides navigation to character editor
+- `StoryCharacterEditorView.swift`: Creates and edits story characters
+  - Manages character details and avatar
+  - Integrates with FullScreenImageView
+  - Handles image selection and generation
+- `FullScreenImageView.swift`: Displays images in full screen
+  - Handles image loading and display
+  - Provides zoom and pan functionality
+  - Manages image caching
 - NewPromptView.swift: Allows adding new prompts to stories
 - TemplateSelectionView.swift: Interface for selecting story templates
 
@@ -59,81 +81,85 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
 - TemplateCard.swift: Reusable component for displaying story templates
 
 ### Services
-- OpenAIService.swift: Handles communication with OpenAI API
-- ImageCache.swift: Manages image caching and loading
+- `OpenAIService.swift`: Handles interactions with OpenAI API
+  - Manages API configuration
+  - Handles character avatar generation
+  - Processes story generation requests
+- `ImageCache.swift`: Manages image caching
+  - Handles image loading and caching
+  - Provides efficient image retrieval
+  - Manages memory usage
 
-### Repository
-- StoryRepository.swift: Handles data persistence and Core Data operations
+### Repositories
+- `CharacterRepository.swift`: Data access layer for characters
+  - Handles Core Data operations
+  - Manages character persistence
+- `StoryRepository.swift`: Data access layer for stories
+  - Handles Core Data operations
+  - Manages story persistence
+- `TemplateRepository.swift`: Data access layer for templates
+  - Handles Core Data operations
+  - Manages template persistence
 
 ## Data Flow
-1. User creates/edits story in StoryEditorView
-2. Template selection (if creating new story)
-3. StoryViewModel processes the request
-4. StoryRepository persists the data
-5. UI updates to reflect changes
+1. User interacts with UI components
+2. ViewModels process user input
+3. Repositories handle data persistence
+4. Services manage external API interactions
+5. Core Data manages data storage
+6. ViewModels update UI state
 
 ## Error Handling
-- Comprehensive error handling in ViewModels
-- User-friendly error messages in Views
-- Proper error propagation through the app
+- Comprehensive error handling throughout the app
+- User-friendly error messages
+- Graceful degradation when services are unavailable
+- Data validation at all levels
 
 ## Async Operations
-- Story generation
-- Image loading and caching
-- Character avatar generation
-- Template prompt generation
+- Proper handling of asynchronous operations
+- Loading states for UI feedback
+- Error handling for async tasks
+- Background processing for heavy operations
 
 ## Testing
 - Unit tests for ViewModels
-- Integration tests for Repository
+- Integration tests for Services
 - UI tests for critical user flows
+- Performance tests for image handling
 
 ## Best Practices
 - MVVM architecture
-- SwiftUI for UI components
+- SwiftUI for modern UI
 - Core Data for persistence
-  - Single source of truth for data model
-  - Proper entity relationships
-  - Consistent naming conventions
-- Proper dependency injection
-- Comprehensive error handling
-- Accessibility support
-- Documentation maintenance
+- Proper memory management
+- Efficient image handling
+- Secure API key management
 
 ## Navigation Flow
-1. Story List
-   - View all stories
-   - Create new story
-   - Select story to view/edit
-2. Story Detail
-   - View story content
-   - Add new prompts
-   - Edit story
-   - Manage story characters
-3. Story Editor
-   - Select template (new stories)
-   - Edit story content
-   - Generate prompts
-   - Add/edit story characters
-4. Character Management
-   - User Characters (in Settings)
-     - Create/edit user character
-     - Manage user character
-   - Story Characters (in Story Editor)
-     - Create/edit story characters
-     - Assign characters to stories
-5. Settings
+1. Settings
    - User Character Management
-     - User Character List
-     - User Character Editor
-   - API Configuration
+     - View User Characters
+     - Create/Edit User Character
+     - Delete User Character
+2. Story Editor
+   - Story Character Management
+     - View Story Characters
+     - Create/Edit Story Character
+     - Delete Story Character
+   - Template Selection
+   - Story Creation/Editing
 
 ## Current Limitations
-- Limited character-story relationship management
-- Single API key configuration
+- Template selection UI in StoryEditorView not yet fully integrated with Core Data
+- Advanced template system pending implementation
+- Image generation rate limits from OpenAI API
+- Core Data relationship warnings need resolution
 
 ## Future Enhancements
-- Enhanced character creation and customization
-- Multiple API key support
-- Improved story generation
-- Better character-story relationships
+- Advanced template system with full Core Data integration
+- Enhanced image generation capabilities
+- Improved character relationship management
+- Advanced story analytics
+- Collaborative story creation
+- Export/import functionality
+- Cloud sync support

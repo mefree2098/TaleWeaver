@@ -148,9 +148,7 @@ struct StoryEditorView: View {
             }
             .sheet(isPresented: $showingCharacterEditor) {
                 if case .edit(let story) = mode {
-                    StoryCharacterEditorView(viewModel: CharacterViewModel(context: viewContext), story: story, character: nil)
-                } else {
-                    StoryCharacterEditorView(viewModel: CharacterViewModel(context: viewContext), story: nil, character: nil)
+                    StoryCharacterEditorViewNew(character: nil, story: story)
                 }
             }
             .sheet(isPresented: $showingCharacterList) {
@@ -375,7 +373,7 @@ struct StoryCharacterListView: View {
             }
             .searchable(text: $searchText, prompt: "Search characters")
             .sheet(isPresented: $showingAddCharacter) {
-                StoryCharacterEditorView(viewModel: viewModel, story: story, character: selectedCharacter)
+                StoryCharacterEditorViewNew(character: selectedCharacter, story: story)
             }
         }
     }

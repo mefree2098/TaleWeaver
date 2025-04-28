@@ -51,7 +51,7 @@ struct SettingsView: View {
                 }
             }
             .sheet(isPresented: $showingCharacterEditor) {
-                UserCharacterEditorView(viewModel: characterViewModel)
+                UserCharacterEditorViewNew()
             }
         }
     }
@@ -84,7 +84,7 @@ struct UserCharacterListView: View {
         }
         .searchable(text: $searchText, prompt: "Search characters")
         .sheet(isPresented: $showingAddCharacter) {
-            UserCharacterEditorView(viewModel: viewModel)
+            UserCharacterEditorViewNew()
         }
     }
     
