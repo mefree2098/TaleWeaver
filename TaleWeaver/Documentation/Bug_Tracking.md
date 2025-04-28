@@ -12,10 +12,14 @@
 ## Active Issues
 
 ### Character-Story Relationship Management
-- Status: In Progress
+- Status: Resolved
 - Description: Limited functionality for managing relationships between characters and stories
 - Impact: Users cannot easily track which characters appear in which stories
-- Priority: Medium
+- Solution: 
+  1. Separated user characters from story characters
+  2. Added character management within StoryEditorView
+  3. Implemented automatic name updates throughout stories
+- Prevention: Maintain clear separation between user and story-specific data
 
 ## Known Issues
 - Character Customization Integration
@@ -41,12 +45,17 @@
 
 ### Build Errors in StoryEditorView
 - Status: Resolved
-- Description: Three build errors related to template integration
+- Description: Multiple build errors in StoryEditorView.swift related to character management
+- Impact: Build failed due to scope issues and type mismatches
 - Solution: 
-  1. Removed access to non-existent template property
-  2. Fixed conditional binding for non-optional String
-  3. Removed template parameter from createStory method
-- Prevention: Ensure proper Core Data model setup before implementing UI features
+  1. Fixed story scope issue in sheet presentation by using proper pattern matching with if case
+  2. Fixed character creation and relationship handling by properly retrieving the created character
+  3. Ensured proper parameter types for Core Data relationship methods
+- Prevention: 
+  1. Always use proper pattern matching for enum cases in SwiftUI views
+  2. Verify return types of methods and handle them appropriately
+  3. Ensure proper parameter types for Core Data relationship methods
+  4. Test character creation and relationship handling thoroughly
 
 ### View Initialization Conflict
 - Status: Resolved
@@ -59,6 +68,34 @@
 - Description: Missing required parameter in StoryViewModel initialization
 - Solution: Added required repository and openAIService parameters
 - Prevention: Document required dependencies for view models
+
+### Core Data Relationship Management
+- Status: Resolved
+- Description: Build errors related to Core Data relationship handling and optional binding
+- Impact: Build failed due to type mismatches and incorrect relationship management
+- Solution: 
+  1. Modified CharacterViewModel.createCharacter to return the created Character
+  2. Fixed optional binding for avatarURL using proper nil coalescing
+  3. Updated Core Data relationship handling using NSMutableSet
+- Prevention: 
+  1. Always return created objects from Core Data creation methods
+  2. Use proper optional binding patterns
+  3. Follow Core Data best practices for relationship management
+  4. Document Core Data patterns in the codebase
+
+### Character Creation Return Value Handling
+- Status: Resolved
+- Description: Build error and warnings related to character creation return values and optional handling
+- Impact: Build error in StoryEditorView and warnings in character-related views
+- Solution: 
+  1. Fixed optional handling for avatarURL in StoryEditorView
+  2. Updated all character creation calls to properly handle return values
+  3. Maintained proper character creation functionality across all views
+- Prevention: 
+  1. Always handle return values from Core Data creation methods
+  2. Use proper optional handling patterns
+  3. Maintain consistency across similar functionality in different views
+  4. Document return value handling patterns in the codebase
 
 ## Best Practices
 

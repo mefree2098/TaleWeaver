@@ -111,11 +111,7 @@ struct CharacterEditorView: View {
     }
     
     private func saveCharacter() {
-        if let character = character {
-            viewModel.updateCharacter(character, name: name, description: description, avatarURL: avatarURL)
-        } else {
-            viewModel.createCharacter(name: name, description: description, avatarURL: avatarURL)
-        }
+        let _ = viewModel.createCharacter(name: name, description: description, avatarURL: avatarURL, isUserCharacter: false)
         dismiss()
     }
     

@@ -11,6 +11,7 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - StoryPrompt: Core Data entity for story prompts
   - StoryTemplate: Core Data entity for story templates
   - Character: Core Data entity for characters
+    - isUserCharacter: Boolean flag to distinguish between user characters and story characters
 
 ### Models
 - Story+Extensions.swift: Extensions for Story entity
@@ -23,6 +24,10 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - Dependencies: StoryRepository, OpenAIService
   - Handles story CRUD operations
   - Manages async operations for story generation
+- CharacterViewModel.swift: Manages character data and business logic
+  - Handles character CRUD operations
+  - Distinguishes between user characters and story characters
+  - Updates character names throughout stories when changed
 - TemplateViewModel.swift: Manages story templates
   - Handles template loading and selection
   - Generates prompts from templates
@@ -35,10 +40,15 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - Template selection UI (fully integrated with Core Data)
   - Prompt generation from templates
   - Story content editing
+  - Story character management
 - CharacterEditorView.swift: Handles character creation and editing with image selection and avatar generation
 - CharacterListView.swift: Displays list of characters with search functionality
 - CharacterDetailView.swift: Shows detailed character information and associated stories
-- SettingsView.swift: Displays app settings, API key configuration, and character management
+- SettingsView.swift: Displays app settings, API key configuration, and user character management
+- UserCharacterListView.swift: Displays list of user characters
+- UserCharacterEditorView.swift: Handles user character creation and editing
+- StoryCharacterListView.swift: Displays and manages characters for a specific story
+- StoryCharacterEditorView.swift: Handles story character creation and editing
 - NewPromptView.swift: Allows adding new prompts to stories
 - TemplateSelectionView.swift: Interface for selecting story templates
 
@@ -99,19 +109,23 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
    - View story content
    - Add new prompts
    - Edit story
+   - Manage story characters
 3. Story Editor
    - Select template (new stories)
    - Edit story content
    - Generate prompts
+   - Add/edit story characters
 4. Character Management
-   - View characters
-   - Create/edit characters
-   - Assign characters to stories
+   - User Characters (in Settings)
+     - Create/edit user character
+     - Manage user character
+   - Story Characters (in Story Editor)
+     - Create/edit story characters
+     - Assign characters to stories
 5. Settings
-   - Character Management
-     - Character List
-     - Character Editor
-     - Character Detail
+   - User Character Management
+     - User Character List
+     - User Character Editor
    - API Configuration
 
 ## Current Limitations

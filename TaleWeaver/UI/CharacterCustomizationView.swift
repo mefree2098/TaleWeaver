@@ -65,7 +65,7 @@ struct CharacterCustomizationView: View {
         }
         
         // Use the viewModel to create the character
-        viewModel.createCharacter(name: name, description: description, avatarURL: avatarURL)
+        let _ = viewModel.createCharacter(name: name, description: description, avatarURL: avatarURL, isUserCharacter: true)
         dismiss()
     }
 }
