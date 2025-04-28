@@ -61,6 +61,7 @@ struct UserCharacterListView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Character.name, ascending: true)],
+        predicate: NSPredicate(format: "isUserCharacter == YES"),
         animation: .default)
     private var characters: FetchedResults<Character>
     

@@ -61,7 +61,7 @@ struct StoryCharacterEditorViewNew: View {
                 
                 Section(header: Text("Character Image")) {
                     if !avatarURL.isEmpty {
-                        AsyncImage(url: URL(string: avatarURL.hasPrefix("http") ? avatarURL : "file://\(avatarURL)")) { phase in
+                        AsyncImage(url: URLUtils.createURL(from: avatarURL)) { phase in
                             switch phase {
                             case .empty:
                                 ProgressView()
@@ -141,7 +141,7 @@ struct StoryCharacterEditorViewNew: View {
                 }
             }
             .sheet(isPresented: $showingFullScreenImage) {
-                if let url = URL(string: avatarURL.hasPrefix("http") ? avatarURL : "file://\(avatarURL)") {
+                if let url = URLUtils.createURL(from: avatarURL) {
                     FullScreenImageView(imageURL: url)
                 }
             }
@@ -162,22 +162,6 @@ struct StoryCharacterEditorViewNew: View {
                     print("- intelligence: \(character.intelligence)")
                     print("- isUserCharacter: \(character.isUserCharacter)")
                     print("- stories count: \(character.stories?.count ?? 0)")
-                    
-                    // Ensure state is properly initialized with character data
-                    if name.isEmpty && character.name != nil {
-                        name = character.name ?? ""
-                    }
-                    if description.isEmpty && character.characterDescription != nil {
-                        description = character.characterDescription ?? ""
-                    }
-                    if avatarURL.isEmpty && character.avatarURL != nil {
-                        avatarURL = character.avatarURL ?? ""
-                    }
-                    if intelligence == 5 && character.intelligence != 5 {
-                        intelligence = character.intelligence
-                    }
-                } else {
-                    print("No character data available")
                 }
             }
         }
@@ -226,7 +210,12 @@ struct StoryCharacterEditorViewNew: View {
                 )
                 
                 await MainActor.run {
-                    avatarURL = url
+                    // Ensure the URL is properly formatted for local file access
+                    if url.hasPrefix("file://") {
+                        avatarURL = url
+                    } else {
+                        avatarURL = "file://" + url
+                    }
                     isGeneratingAvatar = false
                 }
             } catch {
@@ -251,11 +240,23 @@ struct StoryCharacterEditorViewNew: View {
             print("- isUserCharacter: \(existingCharacter.isUserCharacter)")
             print("- stories count: \(existingCharacter.stories?.count ?? 0)")
             
+            // Preserve isUserCharacter value when updating
+            let wasUserCharacter = existingCharacter.isUserCharacter
+            
             existingCharacter.name = name
             existingCharacter.characterDescription = description
             existingCharacter.avatarURL = avatarURL
             existingCharacter.intelligence = intelligence
-            existingCharacter.isUserCharacter = false
+            existingCharacter.isUserCharacter = wasUserCharacter // Keep original value
+            
+            // Only modify story relationship if it's not a user character
+            if !wasUserCharacter {
+                if !(existingCharacter.stories?.contains(story) ?? false) {
+                    let stories = existingCharacter.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
+                    stories.add(story)
+                    existingCharacter.stories = stories
+                }
+            }
             
             print("Character after update:")
             print("- objectID: \(existingCharacter.objectID)")
@@ -273,10 +274,10 @@ struct StoryCharacterEditorViewNew: View {
             newCharacter.characterDescription = description
             newCharacter.avatarURL = avatarURL
             newCharacter.intelligence = intelligence
-            newCharacter.isUserCharacter = false
+            newCharacter.isUserCharacter = false // New characters from story editor are never user characters
             
             // Add to stories relationship
-            let stories = newCharacter.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
+            let stories = NSMutableSet()
             stories.add(story)
             newCharacter.stories = stories
             

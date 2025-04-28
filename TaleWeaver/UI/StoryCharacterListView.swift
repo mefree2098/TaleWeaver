@@ -14,10 +14,11 @@ struct StoryCharacterListView: View {
     
     private var filteredCharacters: [Character] {
         let characters = story.characters?.allObjects as? [Character] ?? []
+        let nonUserCharacters = characters.filter { !$0.isUserCharacter }
         if searchText.isEmpty {
-            return characters
+            return nonUserCharacters
         }
-        return characters.filter { character in
+        return nonUserCharacters.filter { character in
             character.name?.localizedCaseInsensitiveContains(searchText) ?? false
         }
     }

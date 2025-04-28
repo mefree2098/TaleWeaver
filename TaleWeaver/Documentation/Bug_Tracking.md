@@ -570,3 +570,21 @@
 - Add character relationship visualization
 - Improve character editor layout
 - Add character statistics and analytics 
+
+### Character Management Issues
+- **Status**: Resolved
+- **Description**: Multiple issues with character management:
+  1. Story characters were showing up under user characters list
+  2. User characters were showing up under story characters list
+  3. Character data was not loading when editing story characters
+- **Impact**: High - Users couldn't properly manage characters
+- **Solution**: 
+  1. Added predicate to UserCharacterListView to filter for user characters only
+  2. Updated StoryCharacterListView to filter out user characters from story characters section
+  3. Fixed StoryCharacterEditorViewNew to properly load character data when editing
+  4. Ensured isUserCharacter is set to false for story characters
+- **Prevention**: 
+  1. Always use proper filtering for character lists
+  2. Ensure proper state initialization in view initializers
+  3. Test character editing flow thoroughly
+  4. Document character management patterns 

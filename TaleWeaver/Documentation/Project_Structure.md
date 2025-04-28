@@ -110,6 +110,7 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - Provides search functionality
   - Supports character deletion with confirmation
   - Refreshes view when changes occur
+  - Filters out user characters from story characters section
 - `StoryCharacterEditorView.swift`: Creates and edits story characters
   - Manages character details and avatar
   - Integrates with FullScreenImageView
@@ -117,6 +118,7 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - Includes intelligence slider for AI capabilities
   - Properly loads existing character data
   - Provides visual feedback for intelligence levels
+  - Ensures isUserCharacter is set to false for story characters
 - `TemplateSelectionView.swift`: Interface for selecting story templates
   - Shows available templates
   - Allows template preview
