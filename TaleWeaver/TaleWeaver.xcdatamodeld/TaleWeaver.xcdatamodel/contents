@@ -16,12 +16,22 @@
         <attribute name="title" optional="YES" attributeType="String"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="characters" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Character" inverseName="stories" inverseEntity="Character"/>
-        <relationship name="prompts" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="StoryPrompt" inverseName="story" inverseEntity="StoryPrompt"/>
+        <relationship name="prompts" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="StoryPrompt" inverseName="story" inverseEntity="Story"/>
+        <relationship name="template" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="StoryTemplate" inverseName="stories" inverseEntity="StoryTemplate"/>
     </entity>
     <entity name="StoryPrompt" representedClassName="StoryPrompt" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="promptText" optional="YES" attributeType="String"/>
         <relationship name="story" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="prompts" inverseEntity="Story"/>
+    </entity>
+    <entity name="StoryTemplate" representedClassName=".StoryTemplate" syncable="YES">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="promptTemplate" optional="YES" attributeType="String"/>
+        <attribute name="templateDescription" optional="YES" attributeType="String"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="stories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Story" inverseName="template" inverseEntity="Story"/>
     </entity>
 </model> 

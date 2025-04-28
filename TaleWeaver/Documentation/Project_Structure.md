@@ -1,87 +1,117 @@
-# Project Structure
+# TaleWeaver Project Structure
+
+## Overview
+TaleWeaver is a SwiftUI-based iOS application for creating and managing stories with AI assistance. The app follows the MVVM (Model-View-ViewModel) architecture pattern and uses Core Data for persistence.
 
 ## Core Components
 
+### Core Data Model
+- TaleWeaver.xcdatamodeld: Single source of truth for all Core Data entities
+  - Story: Core Data entity for stories
+  - StoryPrompt: Core Data entity for story prompts
+  - StoryTemplate: Core Data entity for story templates
+  - Character: Core Data entity for characters
+
 ### Models
-- `Story.swift`: Core Data entity for stories
-- `StoryPrompt.swift`: Core Data entity for story prompts
-- `Character.swift`: Core Data entity for characters
-- `Story+Extensions.swift`: Extensions for Story entity
-  - `promptsArray`: Computed property to access sorted prompts
+- Story+Extensions.swift: Extensions for Story entity
+  - promptsArray: Computed property to access sorted prompts
+- StoryTemplate+CoreDataClass.swift: Core Data class for StoryTemplate entity
+- StoryTemplate+CoreDataProperties.swift: Core Data properties for StoryTemplate entity
 
 ### ViewModels
-- `StoryViewModel.swift`: Manages story data and business logic
+- StoryViewModel.swift: Manages story data and business logic
   - Dependencies: StoryRepository, OpenAIService
-  - Async operations: Story generation, image loading
-- `CharacterViewModel.swift`: Manages character data and business logic
-  - Dependencies: Core Data context
-  - Operations: CRUD operations for characters
+  - Handles story CRUD operations
+  - Manages async operations for story generation
+- TemplateViewModel.swift: Manages story templates
+  - Handles template loading and selection
+  - Generates prompts from templates
+  - Manages template persistence
 
 ### Views
-- `StoryListView.swift`: Main list of stories
-  - Dependencies: StoryViewModel
-  - Features: Search, filtering, sorting
-- `StoryDetailView.swift`: Detailed view of a story
-  - Dependencies: StoryViewModel
-  - Features: Story content, prompts, sharing
-- `StoryEditorView.swift`: Editor for creating/editing stories
-  - Dependencies: StoryViewModel
-  - Features: Rich text editing, prompt management
-- `CharacterListView.swift`: List of characters
-  - Dependencies: CharacterViewModel
-  - Features: Search, filtering, sorting
-- `CharacterCustomizationView.swift`: Editor for creating/editing characters
-  - Dependencies: CharacterViewModel
-  - Features: Character details, image selection
-- `CharacterEditorView.swift`: Alternative editor for creating/editing characters
-  - Dependencies: CharacterViewModel
-  - Features: Character details, image selection
+- StoryListView.swift: Main view displaying all stories
+- StoryDetailView.swift: Displays the details of a selected story and its prompts
+- StoryEditorView.swift: Handles story creation and editing
+  - Template selection UI (fully integrated with Core Data)
+  - Prompt generation from templates
+  - Story content editing
+- CharacterEditorView.swift: Handles character creation and editing with image selection and avatar generation
+- SettingsView.swift: Displays app settings and API key configuration
+- NewPromptView.swift: Allows adding new prompts to stories
+- TemplateSelectionView.swift: Allows selecting a template for story creation
 
 ### Components
-- `CharacterImagePicker.swift`: Reusable image picker for character avatars
-  - Features: Photo library access, image selection
+- CharacterImagePicker.swift: Custom image picker for character avatars
+- StoryCardShape.swift: Custom shape for story cards
+- StoryCardModifier.swift: View modifier for story card styling
+- TemplateCard.swift: Reusable component for displaying story templates
 
 ### Services
-- `OpenAIService.swift`: Handles OpenAI API communication
-  - Features: Story generation, image generation
-- `ImageCache.swift`: Manages image caching
-  - Features: Memory-efficient image storage
+- OpenAIService.swift: Handles communication with OpenAI API
+- ImageCache.swift: Manages image caching and loading
 
 ### Repository
-- `StoryRepository.swift`: Data persistence layer
-  - Features: Core Data operations, error handling
+- StoryRepository.swift: Handles data persistence and Core Data operations
 
 ## Data Flow
-1. User interactions trigger view model methods
-2. View models coordinate with services and repositories
-3. Repositories handle data persistence
-4. Services manage external API communication
-5. Changes are reflected back to the UI through published properties
+1. User creates/edits story in StoryEditorView
+2. Template selection (if creating new story)
+3. StoryViewModel processes the request
+4. StoryRepository persists the data
+5. UI updates to reflect changes
 
 ## Error Handling
-1. Comprehensive error handling in services
-2. User-friendly error messages in views
-3. Proper Core Data error handling
-4. Network error handling in API services
+- Comprehensive error handling in ViewModels
+- User-friendly error messages in Views
+- Proper error propagation through the app
 
 ## Async Operations
-1. Story generation using OpenAI
-2. Image loading and caching
-3. Core Data operations
-4. Network requests
+- Story generation
+- Image loading and caching
+- Character avatar generation
+- Template prompt generation
 
 ## Testing
-1. Unit tests for view models
-2. Integration tests for services
-3. UI tests for critical flows
-4. Performance testing for image cache
+- Unit tests for ViewModels
+- Integration tests for Repository
+- UI tests for critical user flows
 
 ## Best Practices
-1. MVVM architecture
-2. SwiftUI for UI components
-3. Core Data for persistence
-4. Proper error handling
-5. Comprehensive documentation
-6. Regular testing
-7. Memory management
-8. Accessibility support
+- MVVM architecture
+- SwiftUI for UI components
+- Core Data for persistence
+  - Single source of truth for data model
+  - Proper entity relationships
+  - Consistent naming conventions
+- Proper dependency injection
+- Comprehensive error handling
+- Accessibility support
+- Documentation maintenance
+
+## Navigation Flow
+1. Story List
+   - View all stories
+   - Create new story
+   - Select story to view/edit
+2. Story Detail
+   - View story content
+   - Add new prompts
+   - Edit story
+3. Story Editor
+   - Select template (new stories)
+   - Edit story content
+   - Generate prompts
+4. Character Management
+   - View characters
+   - Create/edit characters
+   - Assign characters to stories
+
+## Current Limitations
+- Limited character-story relationship management
+- Single API key configuration
+
+## Future Enhancements
+- Enhanced character creation and customization
+- Multiple API key support
+- Improved story generation
+- Better character-story relationships

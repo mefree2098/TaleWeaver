@@ -10,6 +10,7 @@ struct StoryEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel: StoryViewModel
+    @StateObject private var templateViewModel: TemplateViewModel
     
     @State private var title: String = ""
     @State private var prompt: String = ""
@@ -17,6 +18,8 @@ struct StoryEditorView: View {
     @State private var isGenerating: Bool = false
     @State private var errorMessage: String?
     @State private var showingError: Bool = false
+    @State private var showingTemplateSelection: Bool = false
+    @State private var selectedTemplate: StoryTemplate?
     
     private let mode: StoryEditorMode
     
@@ -35,6 +38,9 @@ struct StoryEditorView: View {
             _viewModel = StateObject(wrappedValue: StoryViewModel(repository: repository, openAIService: openAIService))
         }
         
+        // Initialize template view model
+        _templateViewModel = StateObject(wrappedValue: TemplateViewModel(context: PersistenceController.shared.container.viewContext))
+        
         // Initialize state based on mode
         if case .edit(let story) = mode {
             _title = State(initialValue: story.title ?? "")
@@ -51,6 +57,26 @@ struct StoryEditorView: View {
                 Section(header: Text("Story Details")) {
                     TextField("Title", text: $title)
                         .accessibilityLabel("Story title")
+                    
+                    if mode == .new {
+                        Button(action: { showingTemplateSelection = true }) {
+                            HStack {
+                                Text(selectedTemplate?.name ?? "Select Template")
+                                    .foregroundColor(selectedTemplate == nil ? .blue : .primary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .accessibilityLabel("Select story template")
+                    }
+                    
+                    if let template = selectedTemplate {
+                        Text(template.templateDescription ?? "")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .accessibilityLabel("Template description")
+                    }
                     
                     TextField("Prompt", text: $prompt)
                         .accessibilityLabel("Story prompt")
@@ -95,8 +121,15 @@ struct StoryEditorView: View {
                     Button(mode == .new ? "Create" : "Save") {
                         saveStory()
                     }
-                    .disabled(title.isEmpty || prompt.isEmpty)
+                    .disabled(title.isEmpty || prompt.isEmpty || (mode == .new && selectedTemplate == nil))
                     .accessibilityLabel(mode == .new ? "Create story" : "Save story")
+                }
+            }
+            .sheet(isPresented: $showingTemplateSelection) {
+                TemplateSelectionView(viewModel: templateViewModel) { template in
+                    selectedTemplate = template
+                    let generatedPrompt = templateViewModel.generatePrompt(from: template)
+                    prompt = generatedPrompt
                 }
             }
         }

@@ -51,7 +51,7 @@ struct StoryDetailView: View {
             StoryEditorView(mode: .edit(story), viewModel: viewModel)
         }
         .sheet(isPresented: $showingNewPromptSheet) {
-            NewPromptView(story: story, viewModel: viewModel)
+            NewPromptView(viewModel: viewModel, story: story)
         }
     }
 }
@@ -77,45 +77,6 @@ struct PromptView: View {
         .cornerRadius(8)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Prompt: \(prompt.promptText ?? "")")
-    }
-}
-
-struct NewPromptView: View {
-    let story: Story
-    @ObservedObject var viewModel: StoryViewModel
-    @Environment(\.dismiss) private var dismiss
-    @State private var promptText = ""
-    
-    var body: some View {
-        NavigationView {
-            Form {
-                Section {
-                    TextEditor(text: $promptText)
-                        .frame(height: 100)
-                } header: {
-                    Text("Enter your prompt")
-                }
-            }
-            .navigationTitle("New Prompt")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .accessibilityLabel("Cancel adding prompt")
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Add") {
-                        viewModel.addPrompt(to: story, text: promptText)
-                        dismiss()
-                    }
-                    .disabled(promptText.isEmpty)
-                    .accessibilityLabel("Add prompt")
-                }
-            }
-        }
     }
 }
 

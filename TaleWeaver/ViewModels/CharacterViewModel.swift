@@ -8,8 +8,11 @@ class CharacterViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isLoading = false
     
+    private let openAIService: OpenAIService
+    
     init(context: NSManagedObjectContext) {
         self.context = context
+        self.openAIService = OpenAIService(apiKey: Configuration.openAIAPIKey)
         fetchCharacters()
     }
     
@@ -64,7 +67,6 @@ class CharacterViewModel: ObservableObject {
     }
     
     func generateCharacterAvatar(name: String) async throws -> String {
-        // TODO: Implement avatar generation using OpenAI API
-        return ""
+        return try await openAIService.generateCharacterAvatar(description: name)
     }
 } 
