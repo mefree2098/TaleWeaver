@@ -226,7 +226,112 @@
 - **Solution**: Removed the viewModel parameter from StoryCharacterListView initialization as it's not part of the view's initializer
 - **Prevention**: Always check view initializers before passing parameters
 
+### Intelligence Slider Implementation
+- **Status**: Implemented
+- **Description**: Added intelligence slider for story characters to determine their AI capabilities
+- **Impact**: Medium
+- **Solution**: 
+  1. Added intelligence attribute to Character entity in Core Data model
+  2. Updated StoryCharacterEditorViewNew to include intelligence slider
+  3. Added color-coded feedback based on intelligence level
+  4. Ensured intelligence value is saved with character data
+- **Prevention**: Document all required features in project planning phase
+
+### Chat Transcript Interface Implementation
+- **Status**: Implemented
+- **Description**: Transformed story view from prompt-based to chat transcript interface
+- **Impact**: High
+- **Solution**: 
+  1. Updated StoryDetailView to display prompts as chat messages
+  2. Added inline message input instead of separate sheet
+  3. Created ChatMessageView to display messages with user character information
+  4. Integrated user character name and avatar with messages
+- **Prevention**: Design UI components with future extensibility in mind
+
 ## Resolved Issues
+
+### Character Editor State Management and Context Propagation
+- **Issue**: Character editor was not receiving proper Core Data context and selected character, causing new characters to be created instead of editing existing ones
+- **Impact**: High - Users couldn't edit existing characters and duplicate characters were being created
+- **Root Cause**: 
+  1. Missing managed object context environment in sheet presentations
+  2. Improper state management for selected character
+  3. State variables being initialized twice in character editor
+  4. No proper reset of state when dismissing sheets
+- **Resolution**: 
+  1. Added explicit managed object context to all sheet presentations:
+     ```swift
+     .sheet(isPresented: $showingCharacterEditor) {
+         StoryCharacterEditorViewNew(character: selectedCharacter, story: story)
+             .environment(\.managedObjectContext, viewContext)
+     }
+     ```
+  2. Added onDismiss handlers to reset character selection state:
+     ```swift
+     .sheet(isPresented: $showingCharacterEditor, onDismiss: {
+         selectedCharacter = nil
+     }) {
+         // Editor view
+     }
+     ```
+  3. Fixed character editor initializer to properly set state variables based on character data:
+     ```swift
+     init(character: Character?, story: Story) {
+         self.character = character
+         self.story = story
+         
+         // Log character details for debugging
+         if let character = character {
+             print("Initializing editor with existing character: \(character.name ?? "nil")")
+             print("Character objectID: \(character.objectID)")
+             
+             // Initialize state with character data
+             _name = State(initialValue: character.name ?? "")
+             _description = State(initialValue: character.characterDescription ?? "")
+             _avatarURL = State(initialValue: character.avatarURL ?? "")
+             _intelligence = State(initialValue: character.intelligence)
+         } else {
+             print("Initializing editor for new character")
+             // Initialize with empty values for new character
+             _name = State(initialValue: "")
+             _description = State(initialValue: "")
+             _avatarURL = State(initialValue: "")
+             _intelligence = State(initialValue: 0.5)
+         }
+     }
+     ```
+  4. Added comprehensive logging to track character data flow:
+     ```swift
+     private func logCharacterDetails() {
+         if let character = selectedCharacter {
+             print("Opening editor for existing character: \(character.name ?? "nil")")
+             print("Character details:")
+             print("- objectID: \(character.objectID)")
+             print("- name: \(character.name ?? "nil")")
+             print("- description: \(character.characterDescription ?? "nil")")
+             print("- avatarURL: \(character.avatarURL ?? "nil")")
+             print("- intelligence: \(character.intelligence)")
+         } else {
+             print("Opening editor for new character")
+         }
+     }
+     ```
+- **Testing Status**: Verified through console logs and user testing
+- **Prevention**: 
+  1. Always ensure proper environment context propagation in sheet presentations
+  2. Always reset state when dismissing sheets or modals
+  3. Use proper initialization patterns for state variables
+  4. Add comprehensive logging for debugging
+  5. Test character editing flow thoroughly
+  6. Document character management patterns
+
+### Character Editor Initialization
+- **Issue**: Character data was not being properly initialized in the editor view
+- **Impact**: High - Users could not edit existing characters
+- **Root Cause**: Initializer was overwriting character values with empty defaults
+- **Resolution**: Restructured initializer to properly set state variables based on character data
+- **Testing Status**: Verified through console logs showing proper initialization
+- **Prevention**: Added comprehensive logging to track character data flow
 
 ### Character Editor Empty Fields
 - **Status**: Resolved
@@ -276,6 +381,8 @@
 - Implement proper view lifecycle handling
 - Follow SwiftUI best practices for view composition
 - Use appropriate view modifiers
+- Always reset state when dismissing sheets or modals
+- Ensure proper environment context propagation in sheet presentations
 
 ### Accessibility
 - Implement proper accessibility labels

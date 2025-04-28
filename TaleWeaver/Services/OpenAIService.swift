@@ -59,15 +59,19 @@ class OpenAIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let requestBody: [String: Any] = [
-            "model": "dall-e-3",
-            "prompt": "Create a full-body portrait of a character with the following description: \(description). Style: digital art, clean lines, vibrant colors, full body shot from head to toe, centered composition.",
+            "model": "gpt-image-1",
+            "prompt": "Create a full-body portrait of a character with the following description: \(description). Style: digital art, clean lines, soft lighting from above, subtle background with depth, full body shot from head to toe, centered composition, art style consistent with the story's genre.",
             "n": 1,
             "size": "1024x1024"
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
-        return try await performImageRequest(request)
+        // Get the OpenAI image URL
+        let openAIURL = try await performImageRequest(request)
+        
+        // Download the image and save it locally
+        return try await downloadAndSaveImage(from: openAIURL)
     }
     
     private func performRequest(_ request: URLRequest) async throws -> String {
@@ -170,6 +174,39 @@ class OpenAIService {
                 try await Task.sleep(nanoseconds: UInt64(pow(2.0, Double(retryCount)) * 1_000_000_000))
             }
         }
+    }
+    
+    private func downloadAndSaveImage(from urlString: String) async throws -> String {
+        guard let url = URL(string: urlString) else {
+            throw OpenAIError.apiError("Invalid image URL")
+        }
+        
+        // Create a unique filename based on the URL
+        let filename = url.lastPathComponent
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileURL = documentsDirectory.appendingPathComponent("character_avatars").appendingPathComponent(filename)
+        
+        // Create the directory if it doesn't exist
+        try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        
+        // Check if the file already exists
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            print("Image already exists at \(fileURL.path)")
+            return fileURL.path
+        }
+        
+        // Download the image
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw OpenAIError.invalidResponse
+        }
+        
+        // Save the image to the file
+        try data.write(to: fileURL)
+        print("Image saved to \(fileURL.path)")
+        
+        return fileURL.path
     }
 }
 

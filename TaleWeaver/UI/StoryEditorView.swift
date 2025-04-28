@@ -26,30 +26,13 @@ struct StoryEditorView: View {
     
     private let mode: StoryEditorMode
     
-    init(mode: StoryEditorMode, viewModel: StoryViewModel? = nil) {
+    init(mode: StoryEditorMode, viewModel: StoryViewModel) {
         self.mode = mode
-        
-        if let viewModel = viewModel {
-            // Use the provided view model
-            _viewModel = StateObject(wrappedValue: viewModel)
-        } else {
-            // Create repository and service
-            let repository = StoryRepository(context: PersistenceController.shared.container.viewContext)
-            let openAIService = OpenAIService(apiKey: Configuration.openAIAPIKey)
-            
-            // Initialize view model with dependencies
-            _viewModel = StateObject(wrappedValue: StoryViewModel(repository: repository, openAIService: openAIService))
-        }
-        
-        // Initialize template view model
+        _viewModel = StateObject(wrappedValue: viewModel)
         _templateViewModel = StateObject(wrappedValue: TemplateViewModel(context: PersistenceController.shared.container.viewContext))
         
-        // Initialize state based on mode
         if case .edit(let story) = mode {
             _title = State(initialValue: story.title ?? "")
-            if let firstPrompt = story.promptsArray.first {
-                _prompt = State(initialValue: firstPrompt.promptText ?? "")
-            }
             _content = State(initialValue: story.content ?? "")
         }
     }
@@ -150,42 +133,59 @@ struct StoryEditorView: View {
                     prompt = generatedPrompt
                 }
             }
-            .sheet(isPresented: $showingCharacterEditor) {
+            .sheet(isPresented: $showingCharacterEditor, onDismiss: {
+                selectedCharacter = nil
+            }) {
                 if case .edit(let story) = mode {
                     StoryCharacterEditorViewNew(character: selectedCharacter, story: story)
+                        .environment(\.managedObjectContext, viewContext)
                 }
             }
             .sheet(isPresented: $showingCharacterList) {
                 if case .edit(let story) = mode {
                     StoryCharacterListView(story: story)
+                        .environment(\.managedObjectContext, viewContext)
                 }
             }
         }
     }
     
     private func saveStory() {
-        isGenerating = true
-        errorMessage = nil
-        
-        Task {
-            switch mode {
-            case .new:
-                await viewModel.createStory(title: title, prompt: prompt)
-                await MainActor.run {
-                    if let error = viewModel.error {
-                        errorMessage = error.localizedDescription
-                        showingError = true
-                    } else {
-                        dismiss()
-                    }
-                    isGenerating = false
-                }
-            case .edit(let story):
-                viewModel.updateStory(story, title: title, content: content)
-                await MainActor.run {
-                    dismiss()
-                    isGenerating = false
-                }
+        if case .edit(let story) = mode {
+            story.title = title
+            story.content = content
+            story.updatedAt = Date()
+            
+            if let error = errorMessage {
+                print("Error saving story: \(error)")
+                return
+            }
+            
+            do {
+                try viewContext.save()
+                dismiss()
+            } catch {
+                print("Error saving story: \(error)")
+                errorMessage = "Failed to save story: \(error.localizedDescription)"
+            }
+        } else {
+            let story = Story(context: viewContext)
+            story.id = UUID()
+            story.title = title
+            story.content = content
+            story.createdAt = Date()
+            story.updatedAt = Date()
+            
+            if let template = selectedTemplate {
+                story.template = template
+            }
+            
+            do {
+                try viewContext.save()
+                dismiss()
+            } catch {
+                print("Error saving story: \(error)")
+                errorMessage = "Failed to save story: \(error.localizedDescription)"
             }
         }
     }
@@ -324,103 +324,6 @@ struct StoryCharacterEditorView: View {
                     errorMessage = error.localizedDescription
                     isGeneratingAvatar = false
                 }
-            }
-        }
-    }
-}
-
-struct StoryCharacterListView: View {
-    @Environment(\.managedObjectContext) private var viewContext
-    @Environment(\.dismiss) private var dismiss
-    @State private var searchText = ""
-    @State private var showingCharacterEditor = false
-    @State private var selectedCharacter: Character?
-    let story: Story
-    
-    var filteredCharacters: [Character] {
-        if searchText.isEmpty {
-            return Array(story.characters as? Set<Character> ?? [])
-        } else {
-            return Array(story.characters as? Set<Character> ?? []).filter { character in
-                character.name?.localizedCaseInsensitiveContains(searchText) ?? false
-            }
-        }
-    }
-    
-    var userCharacters: [Character] {
-        let fetchRequest: NSFetchRequest<Character> = Character.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "isUserCharacter == YES")
-        return (try? viewContext.fetch(fetchRequest)) ?? []
-    }
-    
-    var body: some View {
-        NavigationView {
-            List {
-                Section(header: Text("User Character")) {
-                    if let userCharacter = story.userCharacter {
-                        HStack {
-                            Text(userCharacter.name ?? "")
-                            Spacer()
-                            Button("Remove") {
-                                story.userCharacter = nil
-                                try? viewContext.save()
-                            }
-                            .foregroundColor(.red)
-                        }
-                    } else {
-                        Text("No user character assigned")
-                            .foregroundColor(.gray)
-                    }
-                }
-                
-                Section(header: Text("Available User Characters")) {
-                    ForEach(userCharacters, id: \.id) { character in
-                        HStack {
-                            Text(character.name ?? "")
-                            Spacer()
-                            if story.userCharacter == nil {
-                                Button("Assign") {
-                                    story.userCharacter = character
-                                    try? viewContext.save()
-                                }
-                                .foregroundColor(.blue)
-                            }
-                        }
-                    }
-                }
-                
-                Section(header: Text("Story Characters")) {
-                    ForEach(filteredCharacters, id: \.id) { character in
-                        HStack {
-                            Text(character.name ?? "")
-                            Spacer()
-                            Button("Edit") {
-                                selectedCharacter = character
-                                showingCharacterEditor = true
-                            }
-                            .foregroundColor(.blue)
-                        }
-                    }
-                    .onDelete { indexSet in
-                        let charactersToDelete = indexSet.map { filteredCharacters[$0] }
-                        for character in charactersToDelete {
-                            story.removeFromCharacters(character)
-                        }
-                        try? viewContext.save()
-                    }
-                }
-            }
-            .searchable(text: $searchText, prompt: "Search characters")
-            .navigationTitle("Characters")
-            .navigationBarItems(
-                leading: Button("Done") { dismiss() },
-                trailing: Button("Add Character") {
-                    selectedCharacter = nil
-                    showingCharacterEditor = true
-                }
-            )
-            .sheet(isPresented: $showingCharacterEditor) {
-                StoryCharacterEditorViewNew(character: selectedCharacter, story: story)
             }
         }
     }

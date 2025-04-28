@@ -12,14 +12,15 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - StoryTemplate: Core Data entity for story templates
   - Character: Core Data entity for characters
     - isUserCharacter: Boolean flag to distinguish between user characters and story characters
+    - intelligence: Integer attribute (1-10) for story characters to determine their AI capabilities
 
 ### Models
 - `Character.swift`: Core Data entity for managing characters
-  - Attributes: id, name, characterDescription, avatarURL, isUserCharacter
-  - Relationships: story (to Story)
+  - Attributes: id, name, characterDescription, avatarURL, isUserCharacter, intelligence
+  - Relationships: story (to Story), userStories (to Story)
 - `Story.swift`: Core Data entity for managing stories
   - Attributes: id, title, content, createdAt, updatedAt
-  - Relationships: prompts (to StoryPrompt), characters (to Character)
+  - Relationships: prompts (to StoryPrompt), characters (to Character), userCharacter (to Character)
 - `StoryPrompt.swift`: Core Data entity for managing story prompts
   - Attributes: id, content, createdAt
   - Relationships: story (to Story)
@@ -36,13 +37,18 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
 - `StoryViewModel.swift`: Manages story data and business logic
   - Handles CRUD operations for stories
   - Manages story prompts and templates
+  - Processes chat messages in the story transcript
 - `TemplateViewModel.swift`: Manages template data and business logic
   - Handles CRUD operations for templates
   - Manages template selection and application
 
 ### Views
 - StoryListView.swift: Main view displaying list of stories
-- StoryDetailView.swift: Displays the details of a selected story and its prompts
+- StoryDetailView.swift: Displays the details of a selected story
+  - Shows story content
+  - Displays chat transcript interface
+  - Allows adding new messages to the conversation
+  - Shows user character avatar and name with messages
 - StoryEditorView.swift: Handles story creation and editing
   - Template selection UI (fully integrated with Core Data)
   - Prompt generation from templates
@@ -71,6 +77,7 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - Manages character details and avatar
   - Integrates with FullScreenImageView
   - Handles image selection and generation
+  - Includes intelligence slider for AI capabilities
 - `FullScreenImageView.swift`: Displays images in full screen
   - Handles image loading and display
   - Provides zoom and pan functionality
@@ -83,6 +90,11 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
 - StoryCardShape.swift: Custom shape for story cards
 - StoryCardModifier.swift: View modifier for story card styling
 - TemplateCard.swift: Reusable component for displaying story templates
+- ChatMessageView.swift: Displays a chat message with user character information
+  - Shows character avatar
+  - Displays character name
+  - Shows message content
+  - Includes timestamp
 
 ### Services
 - `OpenAIService.swift`: Handles interactions with OpenAI API
@@ -152,6 +164,12 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
      - Delete Story Character
    - Template Selection
    - Story Creation/Editing
+3. Story Detail
+   - View Story Content
+   - Chat Transcript Interface
+     - View Conversation History
+     - Add New Messages
+     - See User Character Information
 
 ### Character Management
 1. User accesses character management through Settings (user characters) or Story Editor (story characters)
@@ -160,6 +178,9 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
    - User can assign/remove user character
    - User can manage story-specific characters
    - Changes are immediately reflected in the story
+4. User character information is displayed in the chat transcript:
+   - Character name and avatar are shown with each message
+   - If character name is updated, it automatically updates in all messages
 
 ## Current Limitations
 - Template selection UI in StoryEditorView not yet fully integrated with Core Data
@@ -184,3 +205,8 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
 - Character relationship management
 - Character arc tracking
 - Character dialogue history
+- Enhanced chat transcript features:
+  - Support for multiple characters in conversation
+  - Character-specific styling for messages
+  - Message threading and replies
+  - Rich text formatting in messages
