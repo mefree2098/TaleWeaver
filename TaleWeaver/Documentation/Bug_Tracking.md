@@ -97,6 +97,50 @@
   3. Maintain consistency across similar functionality in different views
   4. Document return value handling patterns in the codebase
 
+### Character Editing and Image Generation
+- Status: Resolved
+- Description: Issues with character editing and image generation functionality
+- Impact: Users couldn't edit existing characters and were prompted to upload images
+- Solution: 
+  1. Removed image picker functionality from character editors
+  2. Fixed character editing by properly handling update vs. create in saveCharacter methods
+  3. Simplified avatar generation to be the only option
+- Prevention: 
+  1. Ensure proper handling of edit vs. create scenarios
+  2. Keep UI focused on core functionality
+  3. Test character editing flow thoroughly
+  4. Document character management patterns
+
+### Story Character Editing
+- Status: Resolved
+- Description: Issues with story character editing and image generation functionality
+- Impact: Users couldn't edit existing story characters and were prompted to upload images
+- Solution: 
+  1. Removed image picker functionality from StoryCharacterEditorView
+  2. Fixed story character editing by properly handling update vs. create in saveCharacter method
+  3. Simplified avatar generation to be the only option
+  4. Updated navigation title to reflect edit mode
+- Prevention: 
+  1. Apply consistent patterns across user and story character management
+  2. Ensure proper handling of edit vs. create scenarios
+  3. Keep UI focused on core functionality
+  4. Test character editing flow thoroughly
+
+### Story Character Editor Bug
+- Status: Resolved
+- Description: Bug in StoryCharacterEditorView where character property was missing
+- Impact: Build error and inability to edit story characters
+- Solution: 
+  1. Added character property to StoryCharacterEditorView
+  2. Updated initializer to accept and initialize character property
+  3. Modified StoryCharacterListView to pass selected character to editor
+  4. Updated character selection flow to open editor instead of toggling
+- Prevention: 
+  1. Ensure all properties used in methods are properly defined
+  2. Maintain consistent patterns between user and story character management
+  3. Test character editing flow thoroughly
+  4. Document component dependencies clearly
+
 ## Best Practices
 
 ### Core Data

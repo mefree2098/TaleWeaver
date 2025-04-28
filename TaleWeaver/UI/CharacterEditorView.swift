@@ -64,18 +64,9 @@ struct CharacterEditorView: View {
                     
                     HStack {
                         Button(action: {
-                            showingImagePicker = true
-                        }) {
-                            Label("Select Image", systemImage: "photo")
-                        }
-                        .accessibilityLabel("Select character avatar from photo library")
-                        
-                        Spacer()
-                        
-                        Button(action: {
                             generateAvatar()
                         }) {
-                            Label("Generate", systemImage: "wand.and.stars")
+                            Label("Generate Avatar", systemImage: "wand.and.stars")
                         }
                         .disabled(name.isEmpty || isGeneratingAvatar)
                         .accessibilityLabel("Generate character avatar")
@@ -111,7 +102,11 @@ struct CharacterEditorView: View {
     }
     
     private func saveCharacter() {
-        let _ = viewModel.createCharacter(name: name, description: description, avatarURL: avatarURL, isUserCharacter: false)
+        if let character = character {
+            viewModel.updateCharacter(character, name: name, description: description, avatarURL: avatarURL)
+        } else {
+            let _ = viewModel.createCharacter(name: name, description: description, avatarURL: avatarURL, isUserCharacter: false)
+        }
         dismiss()
     }
     

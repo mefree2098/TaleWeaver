@@ -148,9 +148,9 @@ struct StoryEditorView: View {
             }
             .sheet(isPresented: $showingCharacterEditor) {
                 if case .edit(let story) = mode {
-                    StoryCharacterEditorView(viewModel: CharacterViewModel(context: viewContext), story: story)
+                    StoryCharacterEditorView(viewModel: CharacterViewModel(context: viewContext), story: story, character: nil)
                 } else {
-                    StoryCharacterEditorView(viewModel: CharacterViewModel(context: viewContext), story: nil)
+                    StoryCharacterEditorView(viewModel: CharacterViewModel(context: viewContext), story: nil, character: nil)
                 }
             }
             .sheet(isPresented: $showingCharacterList) {
@@ -193,6 +193,7 @@ struct StoryCharacterEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: CharacterViewModel
     let story: Story?
+    let character: Character?
     
     @State private var name: String = ""
     @State private var description: String = ""
@@ -201,6 +202,18 @@ struct StoryCharacterEditorView: View {
     @State private var selectedImage: UIImage?
     @State private var isGeneratingAvatar = false
     @State private var errorMessage: String?
+    
+    init(viewModel: CharacterViewModel, story: Story?, character: Character? = nil) {
+        self.viewModel = viewModel
+        self.story = story
+        self.character = character
+        
+        if let character = character {
+            _name = State(initialValue: character.name ?? "")
+            _description = State(initialValue: character.characterDescription ?? "")
+            _avatarURL = State(initialValue: character.avatarURL ?? "")
+        }
+    }
     
     var body: some View {
         NavigationView {
@@ -235,18 +248,9 @@ struct StoryCharacterEditorView: View {
                     
                     HStack {
                         Button(action: {
-                            showingImagePicker = true
-                        }) {
-                            Label("Select Image", systemImage: "photo")
-                        }
-                        .accessibilityLabel("Select character avatar from photo library")
-                        
-                        Spacer()
-                        
-                        Button(action: {
                             generateAvatar()
                         }) {
-                            Label("Generate", systemImage: "wand.and.stars")
+                            Label("Generate Avatar", systemImage: "wand.and.stars")
                         }
                         .disabled(name.isEmpty || isGeneratingAvatar)
                         .accessibilityLabel("Generate character avatar")
@@ -265,7 +269,7 @@ struct StoryCharacterEditorView: View {
                     }
                 }
             }
-            .navigationTitle("New Story Character")
+            .navigationTitle(story == nil ? "New Story Character" : "Edit Story Character")
             .navigationBarItems(
                 leading: Button("Cancel") {
                     dismiss()
@@ -282,13 +286,17 @@ struct StoryCharacterEditorView: View {
     }
     
     private func saveCharacter() {
-        let newCharacter = viewModel.createCharacter(name: name, description: description, avatarURL: avatarURL, isUserCharacter: false)
-        
-        if let story = story {
-            let characters = story.characters?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
-            characters.add(newCharacter)
-            story.characters = characters
-            try? story.managedObjectContext?.save()
+        if let character = character {
+            viewModel.updateCharacter(character, name: name, description: description, avatarURL: avatarURL)
+        } else {
+            let newCharacter = viewModel.createCharacter(name: name, description: description, avatarURL: avatarURL, isUserCharacter: false)
+            
+            if let story = story {
+                let characters = story.characters?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
+                characters.add(newCharacter)
+                story.characters = characters
+                try? story.managedObjectContext?.save()
+            }
         }
         
         dismiss()
@@ -325,6 +333,7 @@ struct StoryCharacterListView: View {
     let story: Story
     @State private var showingAddCharacter = false
     @State private var searchText = ""
+    @State private var selectedCharacter: Character?
     
     var body: some View {
         NavigationView {
@@ -340,7 +349,8 @@ struct StoryCharacterListView: View {
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        toggleCharacterInStory(character)
+                        selectedCharacter = character
+                        showingAddCharacter = true
                     }
                 }
                 .onDelete(perform: deleteCharacters)
@@ -349,6 +359,7 @@ struct StoryCharacterListView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
+                        selectedCharacter = nil
                         showingAddCharacter = true
                     }) {
                         Label("Add Character", systemImage: "plus")
@@ -364,7 +375,7 @@ struct StoryCharacterListView: View {
             }
             .searchable(text: $searchText, prompt: "Search characters")
             .sheet(isPresented: $showingAddCharacter) {
-                StoryCharacterEditorView(viewModel: viewModel, story: story)
+                StoryCharacterEditorView(viewModel: viewModel, story: story, character: selectedCharacter)
             }
         }
     }
