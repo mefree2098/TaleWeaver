@@ -13,9 +13,12 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
 - `ContentView.swift`: Root view of the application
   - Manages navigation between main sections
   - Handles app state
+- `Configuration.swift`: App configuration settings
+  - Manages API keys and settings
+  - Provides app-wide configuration
 
 ### Core Data Model
-- TaleWeaver.xcdatamodeld: Single source of truth for all Core Data entities
+- `TaleWeaver.xcdatamodeld`: Single source of truth for all Core Data entities
   - Story: Core Data entity for stories
   - StoryPrompt: Core Data entity for story prompts
   - StoryTemplate: Core Data entity for story templates
@@ -179,6 +182,18 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - Handles Core Data operations
   - Manages story persistence
   - Provides CRUD operations
+
+### Tests
+- `ImageCacheTests.swift`: Tests for image caching functionality
+- `OpenAIServiceTests.swift`: Tests for OpenAI service functionality
+- `StoryManagerTests.swift`: Tests for story management operations
+
+### Documentation
+- `Project_Structure.md`: Documents the project structure and organization
+- `Bug_Tracking.md`: Tracks known issues and their resolutions
+- `Deployment_Guide.md`: Provides guidance for deploying the application
+- `Script_Adherence.md`: Tracks adherence to project requirements
+- `Development_Workflow.md`: Outlines the development workflow
 
 ## Data Flow
 1. User interacts with UI components
