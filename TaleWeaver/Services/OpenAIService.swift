@@ -71,7 +71,7 @@ class OpenAIService {
         }
         
         print("🔄 Generating new image...")
-        let prompt = "Create a detailed portrait of a character with the following description: \(description). The image should be in a fantasy art style, suitable for a role-playing game character."
+        let prompt = "Create a detailed portrait of a character with the following description: \(description). The image should be a high-quality, professional character portrait."
         
         let requestBody: [String: Any] = [
             "model": "gpt-image-1",

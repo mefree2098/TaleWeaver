@@ -75,6 +75,5 @@ struct CharacterRow: View {
     character.avatarURL = "https://example.com/avatar.jpg"
     
     return CharacterRow(character: character)
-        .previewLayout(.sizeThatFits)
         .padding()
 } 
