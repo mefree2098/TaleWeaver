@@ -365,7 +365,7 @@
 - Monitor memory usage during async operations
 
 ### Documentation
-- Keep Project_Structure.md up to date
+- Keep Project_Structure.md up to date (in TaleWeaver/Documentation/)
 - Document all known issues in Bug_Tracking.md
 - Maintain clear documentation of dependencies
 - Document Core Data model relationships

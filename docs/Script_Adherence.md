@@ -38,8 +38,8 @@ This document tracks our adherence to the project requirements and development g
 - ✅ Feedback mechanisms (to be implemented)
 
 ## Documentation Requirements
-- ✅ Project_Structure.md
-- ✅ Bug_Tracking.md
+- ✅ TaleWeaver/Documentation/Project_Structure.md
+- ✅ TaleWeaver/Documentation/Bug_Tracking.md
 - ✅ Script_Adherence.md
 - ✅ Development_Workflow.md
 - ✅ ADR logging

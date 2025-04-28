@@ -5,6 +5,15 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
 
 ## Core Components
 
+### App Structure
+- `TaleWeaverApp.swift`: Main app entry point
+  - Sets up the app environment
+  - Configures Core Data
+  - Initializes services
+- `ContentView.swift`: Root view of the application
+  - Manages navigation between main sections
+  - Handles app state
+
 ### Core Data Model
 - TaleWeaver.xcdatamodeld: Single source of truth for all Core Data entities
   - Story: Core Data entity for stories
@@ -24,9 +33,16 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
 - `StoryPrompt.swift`: Core Data entity for managing story prompts
   - Attributes: id, content, createdAt
   - Relationships: story (to Story)
-- `StoryTemplate.swift`: Core Data entity for managing story templates
-  - Attributes: id, name, description, content
+- `StoryTemplate+CoreDataClass.swift`: Base class for StoryTemplate entity
+  - Implements Identifiable protocol
+  - Inherits from NSManagedObject
+- `StoryTemplate+CoreDataProperties.swift`: Properties and relationships for StoryTemplate
+  - Attributes: id, name, templateDescription, promptTemplate, createdAt, updatedAt
   - Relationships: stories (to Story)
+  - Includes generated accessors for stories relationship
+- `Story+Extensions.swift`: Extensions for Story entity
+  - Provides computed property for sorted prompts array
+  - Sorts prompts by creation date in descending order
 
 ### ViewModels
 - `CharacterViewModel.swift`: Manages character data and business logic
@@ -43,25 +59,42 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - Manages template selection and application
 
 ### Views
-- StoryListView.swift: Main view displaying list of stories
-- StoryDetailView.swift: Displays the details of a selected story
+- `StartView.swift`: Initial view when app launches
+  - Provides onboarding experience
+  - Guides users through initial setup
+- `StoryListView.swift`: Main view displaying list of stories
+  - Shows story cards with titles and previews
+  - Provides navigation to story details
+  - Includes search functionality
+- `StoryDetailView.swift`: Displays the details of a selected story
   - Shows story content
   - Displays chat transcript interface
   - Allows adding new messages to the conversation
   - Shows user character avatar and name with messages
-- StoryEditorView.swift: Handles story creation and editing
+- `StoryEditorView.swift`: Handles story creation and editing
   - Template selection UI (fully integrated with Core Data)
   - Prompt generation from templates
   - Story content editing
   - Story character management
-- CharacterEditorView.swift: Handles character creation and editing with image selection and avatar generation
-- CharacterListView.swift: Displays list of characters with search functionality
-- CharacterDetailView.swift: Shows detailed character information and associated stories
-- SettingsView.swift: Displays app settings, API key configuration, and user character management
-- `UserCharacterListView.swift`: Displays and manages user characters
-  - Shows list of user characters
-  - Allows searching and filtering
-  - Provides navigation to character editor
+- `CharacterEditorView.swift`: Handles character creation and editing
+  - Manages character details
+  - Handles avatar selection and generation
+  - Supports both user and story characters
+- `CharacterListView.swift`: Displays list of characters
+  - Shows character cards with avatars
+  - Provides search functionality
+  - Supports navigation to character details
+- `CharacterDetailView.swift`: Shows detailed character information
+  - Displays character avatar and details
+  - Shows associated stories
+  - Provides navigation to story details
+- `CharacterCustomizationView.swift`: Customizes character appearance
+  - Manages character visual properties
+  - Handles avatar customization
+- `SettingsView.swift`: Displays app settings
+  - API key configuration
+  - User character management
+  - App preferences
 - `UserCharacterEditorView.swift`: Creates and edits user characters
   - Manages character details and avatar
   - Integrates with FullScreenImageView
@@ -72,50 +105,80 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - Allows assigning/removing user character
   - Manages story-specific characters
   - Provides search functionality
-  - Supports adding, editing, and deleting characters
 - `StoryCharacterEditorView.swift`: Creates and edits story characters
   - Manages character details and avatar
   - Integrates with FullScreenImageView
   - Handles image selection and generation
   - Includes intelligence slider for AI capabilities
+- `TemplateSelectionView.swift`: Interface for selecting story templates
+  - Shows available templates
+  - Allows template preview
+  - Supports template selection
+- `NewPromptView.swift`: Allows adding new prompts to stories
+  - Handles prompt input
+  - Manages character selection
+  - Supports prompt preview
+
+### Components
 - `FullScreenImageView.swift`: Displays images in full screen
   - Handles image loading and display
   - Provides zoom and pan functionality
   - Manages image caching
-- NewPromptView.swift: Allows adding new prompts to stories
-- TemplateSelectionView.swift: Interface for selecting story templates
-
-### Components
-- CharacterImagePicker.swift: Custom image picker for character avatars
-- StoryCardShape.swift: Custom shape for story cards
-- StoryCardModifier.swift: View modifier for story card styling
-- TemplateCard.swift: Reusable component for displaying story templates
-- ChatMessageView.swift: Displays a chat message with user character information
-  - Shows character avatar
-  - Displays character name
-  - Shows message content
-  - Includes timestamp
+- `ImagePicker.swift`: Generic image picker component
+  - Uses PHPickerViewController
+  - Supports image selection from photo library
+  - Handles image loading and processing
+- `CharacterImagePicker.swift`: Specialized image picker for characters
+  - Uses UIImagePickerController
+  - Supports photo library access
+  - Handles image selection and processing
+- `StoryCardModifier.swift`: View modifier for story cards
+  - Applies consistent styling
+  - Handles layout and appearance
+  - Manages card interactions
+- `StoryCardShape.swift`: Custom shape for story cards
+  - Defines card appearance
+  - Handles corner radius and shadows
+  - Manages card dimensions
 
 ### Services
 - `OpenAIService.swift`: Handles interactions with OpenAI API
   - Manages API configuration
   - Handles character avatar generation
   - Processes story generation requests
+  - Manages API rate limits
+  - Handles error responses
+
+### Managers
+- `CharacterManager.swift`: Manages character-related operations
+  - Handles character creation and updates
+  - Manages character relationships
+  - Coordinates with repositories
+
+### Utilities
+- `FeedbackManager.swift`: Manages user feedback
+  - Handles haptic feedback
+  - Provides visual feedback
+  - Manages error notifications
 - `ImageCache.swift`: Manages image caching
   - Handles image loading and caching
   - Provides efficient image retrieval
   - Manages memory usage
+- `Secrets.swift`: Manages sensitive information
+  - Stores API keys
+  - Handles secure data
+
+### Core
+- `PersistenceController.swift`: Manages Core Data stack
+  - Sets up persistent container
+  - Handles migrations
+  - Manages save operations
 
 ### Repositories
-- `CharacterRepository.swift`: Data access layer for characters
-  - Handles Core Data operations
-  - Manages character persistence
 - `StoryRepository.swift`: Data access layer for stories
   - Handles Core Data operations
   - Manages story persistence
-- `TemplateRepository.swift`: Data access layer for templates
-  - Handles Core Data operations
-  - Manages template persistence
+  - Provides CRUD operations
 
 ## Data Flow
 1. User interacts with UI components
