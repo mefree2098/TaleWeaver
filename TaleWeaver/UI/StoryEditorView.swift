@@ -157,7 +157,7 @@ struct StoryEditorView: View {
             }
             .sheet(isPresented: $showingCharacterList) {
                 if case .edit(let story) = mode {
-                    StoryCharacterListView(viewModel: CharacterViewModel(context: viewContext), story: story)
+                    StoryCharacterListView(story: story)
                 }
             }
         }
@@ -330,81 +330,98 @@ struct StoryCharacterEditorView: View {
 }
 
 struct StoryCharacterListView: View {
+    @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var viewModel: CharacterViewModel
-    let story: Story
-    @State private var showingAddCharacter = false
     @State private var searchText = ""
+    @State private var showingCharacterEditor = false
     @State private var selectedCharacter: Character?
+    let story: Story
+    
+    var filteredCharacters: [Character] {
+        if searchText.isEmpty {
+            return Array(story.characters as? Set<Character> ?? [])
+        } else {
+            return Array(story.characters as? Set<Character> ?? []).filter { character in
+                character.name?.localizedCaseInsensitiveContains(searchText) ?? false
+            }
+        }
+    }
+    
+    var userCharacters: [Character] {
+        let fetchRequest: NSFetchRequest<Character> = Character.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "isUserCharacter == YES")
+        return (try? viewContext.fetch(fetchRequest)) ?? []
+    }
     
     var body: some View {
         NavigationView {
             List {
-                ForEach(filteredCharacters) { character in
-                    NavigationLink(destination: StoryCharacterEditorViewNew(character: character, story: story)) {
+                Section(header: Text("User Character")) {
+                    if let userCharacter = story.userCharacter {
                         HStack {
-                            CharacterRow(character: character)
+                            Text(userCharacter.name ?? "")
                             Spacer()
-                            if let characters = story.characters as? Set<Character>, characters.contains(character) {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.green)
+                            Button("Remove") {
+                                story.userCharacter = nil
+                                try? viewContext.save()
+                            }
+                            .foregroundColor(.red)
+                        }
+                    } else {
+                        Text("No user character assigned")
+                            .foregroundColor(.gray)
+                    }
+                }
+                
+                Section(header: Text("Available User Characters")) {
+                    ForEach(userCharacters, id: \.id) { character in
+                        HStack {
+                            Text(character.name ?? "")
+                            Spacer()
+                            if story.userCharacter == nil {
+                                Button("Assign") {
+                                    story.userCharacter = character
+                                    try? viewContext.save()
+                                }
+                                .foregroundColor(.blue)
                             }
                         }
                     }
                 }
-                .onDelete(perform: deleteCharacters)
-            }
-            .navigationTitle("Story Characters")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingAddCharacter = true
-                    }) {
-                        Label("Add Character", systemImage: "plus")
-                    }
-                    .accessibilityLabel("Add new story character")
-                }
                 
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Done") {
-                        dismiss()
+                Section(header: Text("Story Characters")) {
+                    ForEach(filteredCharacters, id: \.id) { character in
+                        HStack {
+                            Text(character.name ?? "")
+                            Spacer()
+                            Button("Edit") {
+                                selectedCharacter = character
+                                showingCharacterEditor = true
+                            }
+                            .foregroundColor(.blue)
+                        }
+                    }
+                    .onDelete { indexSet in
+                        let charactersToDelete = indexSet.map { filteredCharacters[$0] }
+                        for character in charactersToDelete {
+                            story.removeFromCharacters(character)
+                        }
+                        try? viewContext.save()
                     }
                 }
             }
             .searchable(text: $searchText, prompt: "Search characters")
-            .sheet(isPresented: $showingAddCharacter) {
-                StoryCharacterEditorViewNew(story: story)
+            .navigationTitle("Characters")
+            .navigationBarItems(
+                leading: Button("Done") { dismiss() },
+                trailing: Button("Add Character") {
+                    selectedCharacter = nil
+                    showingCharacterEditor = true
+                }
+            )
+            .sheet(isPresented: $showingCharacterEditor) {
+                StoryCharacterEditorViewNew(character: selectedCharacter, story: story)
             }
-        }
-    }
-    
-    private var filteredCharacters: [Character] {
-        let allCharacters = viewModel.characters.filter { !$0.isUserCharacter }
-        
-        if searchText.isEmpty {
-            return allCharacters
-        } else {
-            return allCharacters.filter { character in
-                character.name?.localizedCaseInsensitiveContains(searchText) ?? false ||
-                character.characterDescription?.localizedCaseInsensitiveContains(searchText) ?? false
-            }
-        }
-    }
-    
-    private func toggleCharacterInStory(_ character: Character) {
-        if let characters = story.characters as? Set<Character>, characters.contains(character) {
-            story.removeFromCharacters(character)
-        } else {
-            story.addToCharacters(character)
-        }
-        
-        try? story.managedObjectContext?.save()
-    }
-    
-    private func deleteCharacters(at offsets: IndexSet) {
-        for index in offsets {
-            let character = filteredCharacters[index]
-            viewModel.deleteCharacter(character)
         }
     }
 }

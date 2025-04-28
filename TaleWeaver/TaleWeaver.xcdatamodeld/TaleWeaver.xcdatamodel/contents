@@ -9,6 +9,7 @@
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="stories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Story" inverseName="characters" inverseEntity="Story"/>
+        <relationship name="userStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Story" inverseName="userCharacter" inverseEntity="Story"/>
     </entity>
     <entity name="Story" representedClassName="Story" syncable="YES" codeGenerationType="class">
         <attribute name="content" optional="YES" attributeType="String"/>
@@ -19,6 +20,7 @@
         <relationship name="characters" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Character" inverseName="stories" inverseEntity="Character"/>
         <relationship name="prompts" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="StoryPrompt" inverseName="story" inverseEntity="StoryPrompt"/>
         <relationship name="template" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="StoryTemplate" inverseName="stories" inverseEntity="StoryTemplate"/>
+        <relationship name="userCharacter" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Character" inverseName="userStories" inverseEntity="Character"/>
     </entity>
     <entity name="StoryPrompt" representedClassName="StoryPrompt" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>

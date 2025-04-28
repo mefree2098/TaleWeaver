@@ -69,8 +69,6 @@
   3. Verify Core Data relationships match the model definition
   4. Document component dependencies clearly
 
-## Resolved Issues
-
 ### StoryTemplate Entity Duplication
 - Status: Resolved
 - Description: Multiple StoryTemplate entity definitions causing build errors
@@ -200,6 +198,50 @@
 - Solution: Reorganized navigation to separate user and story character management
 - Prevention: Maintain clear and intuitive navigation hierarchy
 
+### User Character Assignment
+- **Status**: Implemented
+- **Description**: User characters can now be assigned to stories, but there may be edge cases to handle
+- **Impact**: Medium
+- **Solution**: Implemented user character assignment in StoryCharacterListView
+- **Prevention**: Added proper Core Data relationship management and UI feedback
+
+### Character Data Loading
+- **Status**: Fixed
+- **Description**: Character data was not loading properly in editor views
+- **Impact**: High
+- **Solution**: Improved state management and data loading in character editor views
+- **Prevention**: Added comprehensive logging and proper initialization
+
+### CoreGraphics NaN Errors
+- **Status**: Fixed
+- **Description**: Invalid numeric values being passed to CoreGraphics API
+- **Impact**: Medium
+- **Solution**: Fixed layout constraints and removed fixed heights
+- **Prevention**: Added proper layout management and size constraints
+
+### StoryCharacterListView Initialization Error
+- **Status**: Fixed
+- **Description**: Build error in StoryEditorView.swift due to extra 'viewModel' parameter in StoryCharacterListView initialization
+- **Impact**: Medium
+- **Solution**: Removed the viewModel parameter from StoryCharacterListView initialization as it's not part of the view's initializer
+- **Prevention**: Always check view initializers before passing parameters
+
+## Resolved Issues
+
+### Character Editor Empty Fields
+- **Status**: Resolved
+- **Description**: Character editor fields were empty when editing existing characters
+- **Impact**: High
+- **Solution**: Improved state initialization and data loading
+- **Prevention**: Added proper state management and logging
+
+### API Key Handling
+- **Status**: Resolved
+- **Description**: API key was not being properly accessed from UserDefaults
+- **Impact**: High
+- **Solution**: Updated OpenAIService to properly handle API key
+- **Prevention**: Added proper error handling and key management
+
 ## Best Practices
 
 ### Core Data
@@ -275,4 +317,20 @@
 ### Data Management
 - Consider implementing data versioning
 - Add data migration support
-- Implement backup and restore functionality 
+- Implement backup and restore functionality
+
+### Character Management
+- Implement character relationship tracking
+- Add character arc management
+- Improve character dialogue history
+- Add character template system
+
+### Performance
+- Optimize Core Data relationships
+- Improve image loading and caching
+- Enhance search functionality
+
+### UI/UX
+- Add character relationship visualization
+- Improve character editor layout
+- Add character statistics and analytics 
