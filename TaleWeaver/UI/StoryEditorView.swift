@@ -22,6 +22,7 @@ struct StoryEditorView: View {
     @State private var selectedTemplate: StoryTemplate?
     @State private var showingCharacterEditor = false
     @State private var showingCharacterList = false
+    @State private var selectedCharacter: Character?
     
     private let mode: StoryEditorMode
     
@@ -96,7 +97,10 @@ struct StoryEditorView: View {
                     }
                     .accessibilityLabel("Manage story characters")
                     
-                    Button(action: { showingCharacterEditor = true }) {
+                    Button(action: { 
+                        selectedCharacter = nil
+                        showingCharacterEditor = true 
+                    }) {
                         Label("Add New Character", systemImage: "person.badge.plus")
                     }
                     .accessibilityLabel("Add new story character")
@@ -148,7 +152,7 @@ struct StoryEditorView: View {
             }
             .sheet(isPresented: $showingCharacterEditor) {
                 if case .edit(let story) = mode {
-                    StoryCharacterEditorViewNew(character: nil, story: story)
+                    StoryCharacterEditorViewNew(character: selectedCharacter, story: story)
                 }
             }
             .sheet(isPresented: $showingCharacterList) {
@@ -337,18 +341,15 @@ struct StoryCharacterListView: View {
         NavigationView {
             List {
                 ForEach(filteredCharacters) { character in
-                    HStack {
-                        CharacterRow(character: character)
-                        Spacer()
-                        if let characters = story.characters as? Set<Character>, characters.contains(character) {
-                            Image(systemName: "checkmark")
-                                .foregroundColor(.green)
+                    NavigationLink(destination: StoryCharacterEditorViewNew(character: character, story: story)) {
+                        HStack {
+                            CharacterRow(character: character)
+                            Spacer()
+                            if let characters = story.characters as? Set<Character>, characters.contains(character) {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.green)
+                            }
                         }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedCharacter = character
-                        showingAddCharacter = true
                     }
                 }
                 .onDelete(perform: deleteCharacters)
@@ -357,7 +358,6 @@ struct StoryCharacterListView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        selectedCharacter = nil
                         showingAddCharacter = true
                     }) {
                         Label("Add Character", systemImage: "plus")
@@ -373,7 +373,7 @@ struct StoryCharacterListView: View {
             }
             .searchable(text: $searchText, prompt: "Search characters")
             .sheet(isPresented: $showingAddCharacter) {
-                StoryCharacterEditorViewNew(character: selectedCharacter, story: story)
+                StoryCharacterEditorViewNew(story: story)
             }
         }
     }

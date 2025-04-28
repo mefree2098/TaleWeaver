@@ -4,22 +4,46 @@ import CoreData
 struct StoryCharacterEditorViewNew: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel: CharacterViewModel
     
-    @State private var name = ""
-    @State private var description = ""
-    @State private var avatarURL = ""
+    let character: Character?
+    let story: Story
+    
+    @State private var name: String
+    @State private var description: String
+    @State private var avatarURL: String
     @State private var showingFullScreenImage = false
     @State private var isGeneratingAvatar = false
     @State private var errorMessage: String?
     
-    var character: Character?
-    var story: Story
-    
     init(character: Character? = nil, story: Story) {
+        print("StoryCharacterEditorViewNew init")
+        print("Character passed in: \(String(describing: character))")
+        print("Character name: \(String(describing: character?.name))")
+        print("Character objectID: \(String(describing: character?.objectID))")
+        print("Story: \(String(describing: story))")
+        
         self.character = character
         self.story = story
-        _viewModel = StateObject(wrappedValue: CharacterViewModel(context: story.managedObjectContext!))
+        
+        // Initialize state with character values if available
+        if let character = character {
+            print("Initializing with existing character")
+            print("Character details:")
+            print("- name: \(character.name ?? "nil")")
+            print("- description: \(character.characterDescription ?? "nil")")
+            print("- avatarURL: \(character.avatarURL ?? "nil")")
+            print("- isUserCharacter: \(character.isUserCharacter)")
+            print("- stories count: \(character.stories?.count ?? 0)")
+            
+            _name = State(initialValue: character.name ?? "")
+            _description = State(initialValue: character.characterDescription ?? "")
+            _avatarURL = State(initialValue: character.avatarURL ?? "")
+        } else {
+            print("Initializing new character")
+            _name = State(initialValue: "")
+            _description = State(initialValue: "")
+            _avatarURL = State(initialValue: "")
+        }
     }
     
     var body: some View {
@@ -27,8 +51,14 @@ struct StoryCharacterEditorViewNew: View {
             Form {
                 Section(header: Text("Character Details")) {
                     TextField("Name", text: $name)
+                        .onChange(of: name) { oldValue, newValue in
+                            print("Name changed to: \(newValue)")
+                        }
                     TextEditor(text: $description)
-                        .frame(height: 100)
+                        .frame(minHeight: 100, maxHeight: 200)
+                        .onChange(of: description) { oldValue, newValue in
+                            print("Description changed to: \(newValue)")
+                        }
                 }
                 
                 Section(header: Text("Avatar")) {
@@ -41,7 +71,7 @@ struct StoryCharacterEditorViewNew: View {
                                 image
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(height: 200)
+                                    .frame(maxWidth: .infinity, maxHeight: 200)
                                     .onTapGesture {
                                         showingFullScreenImage = true
                                     }
@@ -90,10 +120,22 @@ struct StoryCharacterEditorViewNew: View {
                 }
             }
             .onAppear {
+                print("StoryCharacterEditorViewNew onAppear")
+                print("Current state:")
+                print("- name: \(name)")
+                print("- description: \(description)")
+                print("- avatarURL: \(avatarURL)")
+                
                 if let character = character {
-                    name = character.name ?? ""
-                    description = character.characterDescription ?? ""
-                    avatarURL = character.avatarURL ?? ""
+                    print("Character data on appear:")
+                    print("- name: \(character.name ?? "nil")")
+                    print("- description: \(character.characterDescription ?? "nil")")
+                    print("- avatarURL: \(character.avatarURL ?? "nil")")
+                    print("- objectID: \(character.objectID)")
+                    print("- isUserCharacter: \(character.isUserCharacter)")
+                    print("- stories count: \(character.stories?.count ?? 0)")
+                } else {
+                    print("No character data available")
                 }
             }
         }
@@ -102,39 +144,47 @@ struct StoryCharacterEditorViewNew: View {
     private func generateAvatar() {
         guard !name.isEmpty else { return }
         
-        isGeneratingAvatar = true
-        errorMessage = nil
-        
-        Task {
+        Task { @MainActor in
+            isGeneratingAvatar = true
+            errorMessage = nil
+            
             do {
                 let description = "A character named \(name). \(self.description)"
+                print("Generating avatar with description: \(description)")
                 let url = try await OpenAIService.shared.generateCharacterAvatar(description: description)
-                
-                await MainActor.run {
-                    avatarURL = url
-                    isGeneratingAvatar = false
-                }
+                print("Avatar generated successfully: \(url)")
+                avatarURL = url
+                isGeneratingAvatar = false
             } catch OpenAIError.invalidAPIKey {
-                await MainActor.run {
-                    errorMessage = "Please set your OpenAI API key in Settings"
-                    isGeneratingAvatar = false
-                }
+                errorMessage = "Please set your OpenAI API key in Settings"
+                isGeneratingAvatar = false
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isGeneratingAvatar = false
-                }
+                errorMessage = error.localizedDescription
+                isGeneratingAvatar = false
             }
         }
     }
     
     private func saveCharacter() {
+        print("Saving character")
+        print("Current state:")
+        print("- name: \(name)")
+        print("- description: \(description)")
+        print("- avatarURL: \(avatarURL)")
+        
         if let character = character {
+            print("Updating existing character")
+            print("- objectID: \(character.objectID)")
+            print("- current name: \(character.name ?? "nil")")
+            print("- current description: \(character.characterDescription ?? "nil")")
+            print("- current avatarURL: \(character.avatarURL ?? "nil")")
+            
             character.name = name
             character.characterDescription = description
             character.avatarURL = avatarURL
             character.isUserCharacter = false
         } else {
+            print("Creating new character")
             let newCharacter = Character(context: viewContext)
             newCharacter.id = UUID()
             newCharacter.name = name
@@ -150,6 +200,7 @@ struct StoryCharacterEditorViewNew: View {
         
         do {
             try viewContext.save()
+            print("Character saved successfully")
             dismiss()
         } catch {
             print("Error saving character: \(error)")
