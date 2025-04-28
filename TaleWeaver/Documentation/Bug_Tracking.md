@@ -248,6 +248,78 @@
   4. Integrated user character name and avatar with messages
 - **Prevention**: Design UI components with future extensibility in mind
 
+### OpenAIService Image Generation Build Error
+- Status: Resolved
+- Description: Build errors in multiple views due to missing characterId parameter in generateCharacterAvatar calls
+- Impact: Build failed due to API signature mismatch across multiple views
+- Solution: 
+  1. Updated OpenAIService.generateCharacterAvatar to require characterId parameter
+  2. Updated CharacterViewModel to include characterId in its generateCharacterAvatar method
+  3. Updated all views to provide characterId when generating avatars:
+     - UserCharacterEditorView
+     - StoryCharacterEditorView
+     - CharacterEditorView
+     - StoryEditorView
+     - SettingsView
+  4. Added proper UUID handling for new and existing characters
+  5. Maintained backward compatibility with existing character data
+- Prevention: 
+  1. Always update all call sites when modifying API signatures
+  2. Test API changes across all dependent views
+  3. Document API changes in Bug_Tracking.md
+  4. Consider adding automated tests for API usage
+  5. Use consistent patterns across similar functionality in different views
+
+### Character Avatar Generation Parameter Mismatch
+- Status: Resolved
+- Description: Build error due to parameter name mismatch between OpenAIService and CharacterViewModel
+- Impact: Build warning but app still functioned
+- Solution: 
+  1. Updated CharacterViewModel.generateCharacterAvatar to use 'description' parameter name instead of 'name'
+  2. Updated all view calls to use the new parameter name
+  3. Maintained consistent parameter naming across the codebase
+- Prevention: 
+  1. Use consistent parameter names across related methods
+  2. Document API parameter names in comments
+  3. Consider using type aliases for common parameter types
+  4. Add automated tests for API parameter consistency
+
+### Local File URL Handling in AsyncImage
+- Status: Resolved
+- Description: AsyncImage was failing to load local file URLs for character avatars
+- Impact: Character avatars were not displaying in the UI
+- Solution: 
+  1. Updated all views to properly handle both HTTP and local file URLs
+  2. Added URL prefix check to determine if URL is local or remote
+  3. Added proper "file://" prefix for local file URLs
+  4. Updated all character-related views to use consistent URL handling
+- Prevention: 
+  1. Always check URL type before using with AsyncImage
+  2. Use consistent URL handling patterns across the app
+  3. Document URL handling patterns in the codebase
+  4. Add proper error handling for URL loading failures
+
+### Image Loading Issues
+- Status: Resolved
+- Description: Character avatars were not loading properly due to URL formatting issues
+- Impact: Character avatars were not displaying in the UI
+- Error Details:
+  1. "unsupported URL" with error code -1002
+  2. "The requested URL was not found on this server" with error code -1100
+- Root Cause: 
+  1. Local file URLs were not being properly formatted with "file://" prefix
+  2. The app was trying to load local file URLs directly without proper URL formatting
+- Solution: 
+  1. Created a URLUtils utility class to handle URL formatting consistently
+  2. Updated all AsyncImage components to use the URLUtils.createURL method
+  3. Ensured proper URL formatting for both HTTP and local file URLs
+  4. Implemented better error handling for image loading failures
+- Prevention: 
+  1. Use the URLUtils utility for all URL formatting to ensure consistency
+  2. Add proper error handling for image loading failures
+  3. Document URL handling patterns in the codebase
+  4. Add automated tests for URL formatting
+
 ## Resolved Issues
 
 ### Character Editor State Management and Context Propagation

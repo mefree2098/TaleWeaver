@@ -40,7 +40,7 @@ struct UserCharacterEditorViewNew: View {
                                 showingFullScreenImage = true
                             }
                     } else if !avatarURL.isEmpty {
-                        AsyncImage(url: URL(string: avatarURL)) { phase in
+                        AsyncImage(url: URLUtils.createURL(from: avatarURL)) { phase in
                             switch phase {
                             case .empty:
                                 ProgressView()
@@ -111,7 +111,11 @@ struct UserCharacterEditorViewNew: View {
         isGeneratingAvatar = true
         Task {
             do {
-                let url = try await OpenAIService.shared.generateCharacterAvatar(description: description)
+                let characterId = character?.id?.uuidString ?? UUID().uuidString
+                let url = try await OpenAIService.shared.generateCharacterAvatar(
+                    description: description,
+                    characterId: characterId
+                )
                 await MainActor.run {
                     avatarURL = url
                     isGeneratingAvatar = false

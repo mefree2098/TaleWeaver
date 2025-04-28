@@ -151,7 +151,7 @@ struct UserCharacterEditorView: View {
                             .frame(height: 200)
                             .accessibilityLabel("Selected character avatar")
                     } else if let avatarURL = character?.avatarURL, !avatarURL.isEmpty {
-                        AsyncImage(url: URL(string: avatarURL)) { image in
+                        AsyncImage(url: URLUtils.createURL(from: avatarURL)) { image in
                             image
                                 .resizable()
                                 .scaledToFit()
@@ -208,25 +208,21 @@ struct UserCharacterEditorView: View {
     }
     
     private func generateAvatar() {
-        guard !name.isEmpty else { return }
-        
         isGeneratingAvatar = true
-        errorMessage = nil
-        
         Task {
             do {
-                let description = "A character named \(name). \(self.description)"
-                let url = try await viewModel.generateCharacterAvatar(name: description)
-                
+                let characterId = UUID().uuidString
+                let url = try await viewModel.generateCharacterAvatar(
+                    description: description,
+                    characterId: characterId
+                )
                 await MainActor.run {
                     avatarURL = url
                     isGeneratingAvatar = false
                 }
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isGeneratingAvatar = false
-                }
+                print("Error generating avatar: \(error)")
+                isGeneratingAvatar = false
             }
         }
     }

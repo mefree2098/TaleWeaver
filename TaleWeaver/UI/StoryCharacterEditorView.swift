@@ -56,12 +56,15 @@ struct StoryCharacterEditorViewNew: View {
                 Section(header: Text("Character Details")) {
                     TextField("Name", text: $name)
                         .onChange(of: name) { oldValue, newValue in
-                            print("Name changed from '\(oldValue)' to '\(newValue)'")
+                            print("Name updated to: '\(newValue)'")
                         }
                     TextEditor(text: $description)
                         .frame(minHeight: 100, maxHeight: 200)
                         .onChange(of: description) { oldValue, newValue in
-                            print("Description changed from '\(oldValue)' to '\(newValue)'")
+                            // Only log if the change is due to a completed word or punctuation
+                            if newValue.last?.isWhitespace == true || newValue.last?.isPunctuation == true {
+                                print("Description updated to: '\(newValue)'")
+                            }
                         }
                 }
                 
@@ -79,14 +82,17 @@ struct StoryCharacterEditorViewNew: View {
                         ), in: 1...10, step: 1)
                         .accentColor(intelligenceColor)
                         .onChange(of: intelligence) { oldValue, newValue in
-                            print("Intelligence changed from \(oldValue) to \(newValue)")
+                            // Only log if there's an actual change in the integer value
+                            if oldValue != newValue {
+                                print("Intelligence level changed to: \(newValue)")
+                            }
                         }
                     }
                 }
                 
                 Section(header: Text("Avatar")) {
                     if !avatarURL.isEmpty {
-                        AsyncImage(url: URL(string: avatarURL.hasPrefix("http") ? avatarURL : "file://\(avatarURL)")) { phase in
+                        AsyncImage(url: URLUtils.createURL(from: avatarURL)) { phase in
                             switch phase {
                             case .empty:
                                 ProgressView()
@@ -188,24 +194,20 @@ struct StoryCharacterEditorViewNew: View {
     }
     
     private func generateAvatar() {
-        guard !name.isEmpty else { return }
-        
-        Task { @MainActor in
-            isGeneratingAvatar = true
-            errorMessage = nil
-            
+        isGeneratingAvatar = true
+        Task {
             do {
-                let description = "A character named \(name). \(self.description)"
-                print("Generating avatar with description: \(description)")
-                let url = try await OpenAIService.shared.generateCharacterAvatar(description: description)
-                print("Avatar generated successfully: \(url)")
-                avatarURL = url
-                isGeneratingAvatar = false
-            } catch OpenAIError.invalidAPIKey {
-                errorMessage = "Please set your OpenAI API key in Settings"
-                isGeneratingAvatar = false
+                let characterId = character?.id?.uuidString ?? UUID().uuidString
+                let url = try await OpenAIService.shared.generateCharacterAvatar(
+                    description: description,
+                    characterId: characterId
+                )
+                await MainActor.run {
+                    avatarURL = url
+                    isGeneratingAvatar = false
+                }
             } catch {
-                errorMessage = error.localizedDescription
+                print("Error generating avatar: \(error)")
                 isGeneratingAvatar = false
             }
         }

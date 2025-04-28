@@ -80,8 +80,12 @@ class CharacterViewModel: ObservableObject {
         }
     }
     
-    func generateCharacterAvatar(name: String) async throws -> String {
-        return try await openAIService.generateCharacterAvatar(description: name)
+    func generateCharacterAvatar(description: String, characterId: String, forceRegenerate: Bool = false) async throws -> String {
+        return try await openAIService.generateCharacterAvatar(
+            description: description,
+            characterId: characterId,
+            forceRegenerate: forceRegenerate
+        )
     }
     
     private func updateCharacterNameInStory(_ story: Story, oldName: String?, newName: String) {
