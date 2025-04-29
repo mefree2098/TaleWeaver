@@ -171,26 +171,30 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
 - `Secrets.swift`: Manages sensitive information
   - Stores API keys
   - Handles secure data
-- `URLUtils.swift`: Utility functions for URL handling
-  - URL validation and processing
-  - URL string manipulation
-  - URL encoding/decoding
 
 ### Core
 - `PersistenceController.swift`: Manages Core Data stack
   - Sets up persistent container
   - Handles migrations
   - Manages save operations
-- `CoreDataManager.swift`: Core Data management utilities
-  - Provides Core Data context management
-  - Handles Core Data operations
-  - Manages Core Data lifecycle
 
 ### Repositories
 - `StoryRepository.swift`: Data access layer for stories
   - Handles Core Data operations
   - Manages story persistence
   - Provides CRUD operations
+
+### Tests
+- `ImageCacheTests.swift`: Tests for image caching functionality
+- `OpenAIServiceTests.swift`: Tests for OpenAI service functionality
+- `StoryManagerTests.swift`: Tests for story management operations
+
+### Documentation
+- `Project_Structure.md`: Documents the project structure and organization
+- `Bug_Tracking.md`: Tracks known issues and their resolutions
+- `Deployment_Guide.md`: Provides guidance for deploying the application
+- `Script_Adherence.md`: Tracks adherence to project requirements
+- `Development_Workflow.md`: Outlines the development workflow
 
 ## Data Flow
 1. User interacts with UI components
@@ -284,4 +288,4 @@ TaleWeaver is a SwiftUI-based iOS application for creating and managing stories 
   - Support for multiple characters in conversation
   - Character-specific styling for messages
   - Message threading and replies
-  - Rich text formatting in messages
+  - Rich text formatting in messages 
