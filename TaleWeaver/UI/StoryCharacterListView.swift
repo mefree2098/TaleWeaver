@@ -36,7 +36,7 @@ struct StoryCharacterListView: View {
                     ForEach(userCharacters, id: \.objectID) { character in
                         HStack {
                             if let avatarURL = character.avatarURL {
-                                AsyncImage(url: URL(string: avatarURL.hasPrefix("http") ? avatarURL : "file://\(avatarURL)")) { phase in
+                                AsyncImage(url: URLUtils.createURL(from: avatarURL)) { phase in
                                     switch phase {
                                     case .empty:
                                         ProgressView()
@@ -92,7 +92,7 @@ struct StoryCharacterListView: View {
                     ForEach(filteredCharacters, id: \.objectID) { character in
                         HStack {
                             if let avatarURL = character.avatarURL {
-                                AsyncImage(url: URL(string: avatarURL.hasPrefix("http") ? avatarURL : "file://\(avatarURL)")) { phase in
+                                AsyncImage(url: URLUtils.createURL(from: avatarURL)) { phase in
                                     switch phase {
                                     case .empty:
                                         ProgressView()

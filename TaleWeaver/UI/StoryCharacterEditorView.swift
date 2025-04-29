@@ -37,6 +37,7 @@ struct StoryCharacterEditorViewNew: View {
             print("- isUserCharacter: \(character.isUserCharacter)")
             print("- stories count: \(character.stories?.count ?? 0)")
             
+            // Initialize state directly in init
             _name = State(initialValue: character.name ?? "")
             _description = State(initialValue: character.characterDescription ?? "")
             _avatarURL = State(initialValue: character.avatarURL ?? "")
@@ -146,22 +147,11 @@ struct StoryCharacterEditorViewNew: View {
                 }
             }
             .onAppear {
-                print("StoryCharacterEditorViewNew onAppear")
-                print("Current state:")
-                print("- name: '\(name)'")
-                print("- description: '\(description)'")
-                print("- avatarURL: '\(avatarURL)'")
-                print("- intelligence: \(intelligence)")
-                
                 if let character = character {
-                    print("Character data on appear:")
-                    print("- objectID: \(character.objectID)")
-                    print("- name: '\(character.name ?? "nil")'")
-                    print("- description: '\(character.characterDescription ?? "nil")'")
-                    print("- avatarURL: '\(character.avatarURL ?? "nil")'")
-                    print("- intelligence: \(character.intelligence)")
-                    print("- isUserCharacter: \(character.isUserCharacter)")
-                    print("- stories count: \(character.stories?.count ?? 0)")
+                    name = character.name ?? ""
+                    description = character.characterDescription ?? ""
+                    avatarURL = character.avatarURL ?? ""
+                    intelligence = character.intelligence
                 }
             }
         }
@@ -210,12 +200,7 @@ struct StoryCharacterEditorViewNew: View {
                 )
                 
                 await MainActor.run {
-                    // Ensure the URL is properly formatted for local file access
-                    if url.hasPrefix("file://") {
-                        avatarURL = url
-                    } else {
-                        avatarURL = "file://" + url
-                    }
+                    avatarURL = url
                     isGeneratingAvatar = false
                 }
             } catch {
@@ -240,32 +225,59 @@ struct StoryCharacterEditorViewNew: View {
             print("- isUserCharacter: \(existingCharacter.isUserCharacter)")
             print("- stories count: \(existingCharacter.stories?.count ?? 0)")
             
-            // Preserve isUserCharacter value when updating
-            let wasUserCharacter = existingCharacter.isUserCharacter
-            
-            existingCharacter.name = name
-            existingCharacter.characterDescription = description
-            existingCharacter.avatarURL = avatarURL
-            existingCharacter.intelligence = intelligence
-            existingCharacter.isUserCharacter = wasUserCharacter // Keep original value
-            
-            // Only modify story relationship if it's not a user character
-            if !wasUserCharacter {
-                if !(existingCharacter.stories?.contains(story) ?? false) {
-                    let stories = existingCharacter.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
-                    stories.add(story)
-                    existingCharacter.stories = stories
+            // Check if the character is still in the context
+            if existingCharacter.managedObjectContext != nil {
+                // Preserve isUserCharacter value when updating
+                let wasUserCharacter = existingCharacter.isUserCharacter
+                
+                existingCharacter.name = name
+                existingCharacter.characterDescription = description
+                existingCharacter.avatarURL = avatarURL
+                existingCharacter.intelligence = intelligence
+                existingCharacter.isUserCharacter = wasUserCharacter // Keep original value
+                
+                // Only modify story relationship if it's not a user character
+                if !wasUserCharacter {
+                    if !(existingCharacter.stories?.contains(story) ?? false) {
+                        let stories = existingCharacter.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
+                        stories.add(story)
+                        existingCharacter.stories = stories
+                    }
                 }
+                
+                print("Character after update:")
+                print("- objectID: \(existingCharacter.objectID)")
+                print("- name: '\(existingCharacter.name ?? "nil")'")
+                print("- description: '\(existingCharacter.characterDescription ?? "nil")'")
+                print("- avatarURL: '\(existingCharacter.avatarURL ?? "nil")'")
+                print("- intelligence: \(existingCharacter.intelligence)")
+                print("- isUserCharacter: \(existingCharacter.isUserCharacter)")
+                print("- stories count: \(existingCharacter.stories?.count ?? 0)")
+            } else {
+                // Character was removed from context, create a new one
+                print("Character was removed from context, creating a new one")
+                let newCharacter = Character(context: viewContext)
+                newCharacter.id = UUID()
+                newCharacter.name = name
+                newCharacter.characterDescription = description
+                newCharacter.avatarURL = avatarURL
+                newCharacter.intelligence = intelligence
+                newCharacter.isUserCharacter = false
+                
+                // Add to stories relationship
+                let stories = NSMutableSet()
+                stories.add(story)
+                newCharacter.stories = stories
+                
+                print("New character created:")
+                print("- objectID: \(newCharacter.objectID)")
+                print("- name: '\(newCharacter.name ?? "nil")'")
+                print("- description: '\(newCharacter.characterDescription ?? "nil")'")
+                print("- avatarURL: '\(newCharacter.avatarURL ?? "nil")'")
+                print("- intelligence: \(newCharacter.intelligence)")
+                print("- isUserCharacter: \(newCharacter.isUserCharacter)")
+                print("- stories count: \(newCharacter.stories?.count ?? 0)")
             }
-            
-            print("Character after update:")
-            print("- objectID: \(existingCharacter.objectID)")
-            print("- name: '\(existingCharacter.name ?? "nil")'")
-            print("- description: '\(existingCharacter.characterDescription ?? "nil")'")
-            print("- avatarURL: '\(existingCharacter.avatarURL ?? "nil")'")
-            print("- intelligence: \(existingCharacter.intelligence)")
-            print("- isUserCharacter: \(existingCharacter.isUserCharacter)")
-            print("- stories count: \(existingCharacter.stories?.count ?? 0)")
         } else {
             print("Creating new character")
             let newCharacter = Character(context: viewContext)
