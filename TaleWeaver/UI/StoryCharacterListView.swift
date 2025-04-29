@@ -1,229 +1,283 @@
+//
+// StoryCharacterListView.swift
+// TaleWeaver
+//
+
 import SwiftUI
 import CoreData
 
 struct StoryCharacterListView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    
+
     let story: Story
-    @State private var searchText = ""
+
+    @State private var searchText: String = ""
     @State private var selectedCharacter: Character?
-    @State private var showingCharacterEditor = false
-    @State private var refreshID = UUID()
-    @State private var showingDeleteConfirmation = false
-    
-    private var filteredCharacters: [Character] {
-        let characters = story.characters?.allObjects as? [Character] ?? []
-        let nonUserCharacters = characters.filter { !$0.isUserCharacter }
-        if searchText.isEmpty {
-            return nonUserCharacters
-        }
-        return nonUserCharacters.filter { character in
-            character.name?.localizedCaseInsensitiveContains(searchText) ?? false
+    @State private var showingCharacterEditor: Bool = false
+    @State private var showingDeleteConfirmation: Bool = false
+
+    // Fetch all user-created characters
+    @FetchRequest private var userCharacters: FetchedResults<Character>
+    // Fetch all story-specific (non-user) characters
+    @FetchRequest private var storyCharacters: FetchedResults<Character>
+
+    init(story: Story) {
+        self.story = story
+
+        // User characters fetch request
+        let userRequest: NSFetchRequest<Character> = Character.fetchRequest()
+        userRequest.predicate = NSPredicate(format: "isUserCharacter == YES")
+        userRequest.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Character.name, ascending: true)
+        ]
+        _userCharacters = FetchRequest(fetchRequest: userRequest)
+
+        // Story characters fetch request
+        let storyRequest: NSFetchRequest<Character> = Character.fetchRequest()
+        storyRequest.predicate = NSPredicate(format: "isUserCharacter == NO AND ANY stories == %@", story)
+        storyRequest.sortDescriptors = [
+            NSSortDescriptor(keyPath: \Character.name, ascending: true)
+        ]
+        _storyCharacters = FetchRequest(fetchRequest: storyRequest)
+    }
+
+    // MARK: Filtered Lists
+
+    private var filteredUserCharacters: [Character] {
+        let list = Array(userCharacters)
+        guard !searchText.isEmpty else { return list }
+        return list.filter { character in
+            let nameMatch = character.name?.localizedCaseInsensitiveContains(searchText) ?? false
+            let descMatch = character.characterDescription?.localizedCaseInsensitiveContains(searchText) ?? false
+            return nameMatch || descMatch
         }
     }
-    
-    private var userCharacters: [Character] {
-        let fetchRequest: NSFetchRequest<Character> = Character.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "isUserCharacter == YES")
-        return (try? viewContext.fetch(fetchRequest)) ?? []
+
+    private var filteredStoryCharacters: [Character] {
+        let list = Array(storyCharacters)
+        guard !searchText.isEmpty else { return list }
+        return list.filter { character in
+            let nameMatch = character.name?.localizedCaseInsensitiveContains(searchText) ?? false
+            let descMatch = character.characterDescription?.localizedCaseInsensitiveContains(searchText) ?? false
+            return nameMatch || descMatch
+        }
     }
-    
+
+    // MARK: Body
+
     var body: some View {
         NavigationView {
             List {
+                // User Characters Section
                 Section(header: Text("User Characters")) {
-                    ForEach(userCharacters, id: \.objectID) { character in
-                        HStack {
-                            if let avatarURL = character.avatarURL {
-                                AsyncImage(url: URLUtils.createURL(from: avatarURL)) { phase in
-                                    switch phase {
-                                    case .empty:
-                                        ProgressView()
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                            .frame(width: 50, height: 50)
-                                            .clipShape(Circle())
-                                    case .failure:
-                                        Image(systemName: "person.circle.fill")
-                                            .resizable()
-                                            .frame(width: 50, height: 50)
-                                            .foregroundColor(.gray)
-                                    @unknown default:
-                                        EmptyView()
-                                    }
-                                }
-                            } else {
-                                Image(systemName: "person.circle.fill")
-                                    .resizable()
-                                    .frame(width: 50, height: 50)
-                                    .foregroundColor(.gray)
-                            }
-                            
-                            VStack(alignment: .leading) {
-                                Text(character.name ?? "")
-                                if let description = character.characterDescription {
-                                    Text(description)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            if story.characters?.contains(character) ?? false {
-                                Button("Remove") {
-                                    removeCharacter(character)
-                                }
-                                .foregroundColor(.red)
-                            } else {
-                                Button("Assign") {
-                                    assignCharacter(character)
-                                }
-                                .foregroundColor(.blue)
-                            }
-                        }
+                    ForEach(filteredUserCharacters, id: \.objectID) { char in
+                        UserCharacterRow(
+                            character: char,
+                            story: story,
+                            assignAction: assignCharacter(_:),
+                            removeAction: removeCharacter(_:)
+                        )
                     }
+                    .onDelete(perform: deleteUserCharacters)
                 }
-                
+
+                // Story Characters Section
                 Section(header: Text("Story Characters")) {
-                    ForEach(filteredCharacters, id: \.objectID) { character in
-                        HStack {
-                            if let avatarURL = character.avatarURL {
-                                AsyncImage(url: URLUtils.createURL(from: avatarURL)) { phase in
-                                    switch phase {
-                                    case .empty:
-                                        ProgressView()
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                            .frame(width: 50, height: 50)
-                                            .clipShape(Circle())
-                                    case .failure:
-                                        Image(systemName: "person.circle.fill")
-                                            .resizable()
-                                            .frame(width: 50, height: 50)
-                                            .foregroundColor(.gray)
-                                    @unknown default:
-                                        EmptyView()
-                                    }
-                                }
-                            } else {
-                                Image(systemName: "person.circle.fill")
-                                    .resizable()
-                                    .frame(width: 50, height: 50)
-                                    .foregroundColor(.gray)
-                            }
-                            
-                            VStack(alignment: .leading) {
-                                Text(character.name ?? "")
-                                if let description = character.characterDescription {
-                                    Text(description)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            Button("Edit") {
-                                selectedCharacter = character
-                                showingCharacterEditor = true
-                            }
-                            .foregroundColor(.blue)
-                        }
+                    ForEach(filteredStoryCharacters, id: \.objectID) { char in
+                        StoryCharacterRow(
+                            character: char,
+                            editAction: { editCharacter(char) }
+                        )
                     }
-                    .onDelete(perform: deleteCharacters)
+                    .onDelete(perform: deleteStoryCharacters)
                 }
             }
-            .id(refreshID)
+            .listStyle(.insetGrouped)
             .searchable(text: $searchText, prompt: "Search characters")
             .navigationTitle("Characters")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                    Button("Done") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        selectedCharacter = nil
-                        showingCharacterEditor = true
-                    }) {
+                    Button(action: addNewCharacter) {
                         Image(systemName: "plus")
                     }
                 }
             }
-            .sheet(isPresented: $showingCharacterEditor, onDismiss: {
-                refreshID = UUID()
-            }) {
-                StoryCharacterEditorViewNew(character: selectedCharacter, story: story)
-                    .environment(\.managedObjectContext, viewContext)
+            .sheet(isPresented: $showingCharacterEditor) {
+                StoryCharacterEditorViewNew(
+                    character: selectedCharacter,
+                    story: story
+                )
+                .environment(\.managedObjectContext, viewContext)
             }
             .alert("Delete Character", isPresented: $showingDeleteConfirmation) {
                 Button("Cancel", role: .cancel) {
                     selectedCharacter = nil
                 }
                 Button("Delete", role: .destructive) {
-                    if let character = selectedCharacter {
-                        deleteCharacter(character)
-                    }
+                    deleteSelectedCharacter()
                 }
             } message: {
-                Text("Are you sure you want to delete this character? This action cannot be undone and may break any stories associated with this character.")
+                Text("This will remove the character and unassign it from the story.")
             }
         }
     }
-    
+
+    // MARK: Actions
+
     private func assignCharacter(_ character: Character) {
-        let stories = character.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
-        stories.add(story)
-        character.stories = stories
+        let mutable = character.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
+        mutable.add(story)
+        character.stories = mutable
         try? viewContext.save()
-        
-        refreshID = UUID()
     }
-    
+
     private func removeCharacter(_ character: Character) {
-        let stories = character.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
-        stories.remove(story)
-        character.stories = stories
+        let mutable = character.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
+        mutable.remove(story)
+        character.stories = mutable
         try? viewContext.save()
-        
-        refreshID = UUID()
     }
-    
-    private func deleteCharacters(at offsets: IndexSet) {
-        let charactersToDelete = offsets.map { filteredCharacters[$0] }
-        
-        for character in charactersToDelete {
-            selectedCharacter = character
-            showingDeleteConfirmation = true
+
+    private func deleteUserCharacters(at offsets: IndexSet) {
+        for idx in offsets {
+            let char = filteredUserCharacters[idx]
+            viewContext.delete(char)
         }
+        try? viewContext.save()
     }
-    
-    private func deleteCharacter(_ character: Character) {
-        let stories = character.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
-        stories.remove(story)
-        character.stories = stories
-        
-        viewContext.delete(character)
-        
-        do {
-            try viewContext.save()
-            refreshID = UUID()
-        } catch {
-            print("Error deleting character: \(error)")
+
+    private func deleteStoryCharacters(at offsets: IndexSet) {
+        for idx in offsets {
+            let char = filteredStoryCharacters[idx]
+            let mutable = char.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
+            mutable.remove(story)
+            char.stories = mutable
+            viewContext.delete(char)
+        }
+        try? viewContext.save()
+    }
+
+    private func addNewCharacter() {
+        selectedCharacter = nil
+        showingCharacterEditor = true
+    }
+
+    private func editCharacter(_ character: Character) {
+        selectedCharacter = character
+        showingCharacterEditor = true
+    }
+
+    private func deleteSelectedCharacter() {
+        guard let char = selectedCharacter else { return }
+        let mutable = char.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
+        mutable.remove(story)
+        char.stories = mutable
+        viewContext.delete(char)
+        try? viewContext.save()
+        selectedCharacter = nil
+    }
+}
+
+// MARK: – Row Views
+
+struct UserCharacterRow: View {
+    let character: Character
+    let story: Story
+    let assignAction: (Character) -> Void
+    let removeAction: (Character) -> Void
+
+    var body: some View {
+        HStack {
+            AsyncImage(url: URLUtils.createURL(from: character.avatarURL ?? "")) { phase in
+                switch phase {
+                case .empty:
+                    ProgressView().frame(width: 50, height: 50)
+                case .success(let img):
+                    img
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 50, height: 50)
+                        .clipShape(Circle())
+                case .failure:
+                    Image(systemName: "person.circle.fill")
+                        .resizable()
+                        .frame(width: 50, height: 50)
+                        .foregroundColor(.gray)
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            VStack(alignment: .leading) {
+                Text(character.name ?? "")
+                Text(character.characterDescription ?? "")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            if story.characters?.contains(character) == true {
+                Button("Remove") { removeAction(character) }
+                    .foregroundColor(.red)
+            } else {
+                Button("Assign") { assignAction(character) }
+                    .foregroundColor(.blue)
+            }
         }
     }
 }
 
+struct StoryCharacterRow: View {
+    let character: Character
+    let editAction: () -> Void
+
+    var body: some View {
+        HStack {
+            AsyncImage(url: URLUtils.createURL(from: character.avatarURL ?? "")) { phase in
+                switch phase {
+                case .empty:
+                    ProgressView().frame(width: 50, height: 50)
+                case .success(let img):
+                    img
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 50, height: 50)
+                        .clipShape(Circle())
+                case .failure:
+                    Image(systemName: "person.circle.fill")
+                        .resizable()
+                        .frame(width: 50, height: 50)
+                        .foregroundColor(.gray)
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            VStack(alignment: .leading) {
+                Text(character.name ?? "")
+                Text(character.characterDescription ?? "")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            Button("Edit", action: editAction)
+                .foregroundColor(.blue)
+        }
+    }
+}
+
+// MARK: – Preview
+
 struct StoryCharacterListView_Previews: PreviewProvider {
     static var previews: some View {
-        StoryCharacterListView(story: Story())
+        let ctx = PersistenceController.preview.container.viewContext
+        let previewStory = Story(context: ctx)
+        previewStory.id = UUID()
+        previewStory.title = "Preview Story"
+
+        return StoryCharacterListView(story: previewStory)
+            .environment(\.managedObjectContext, ctx)
     }
-} 
+}

@@ -1,7 +1,7 @@
 # Development Workflow
 
 ## Development Environment
-- Xcode 15
+- Xcode 16.3
 - iOS 17.0+ target
 - SwiftUI
 - Combine

@@ -1,13 +1,18 @@
+//
+// StoryCharacterEditorViewNew.swift
+// TaleWeaver
+//
+
 import SwiftUI
 import CoreData
 
 struct StoryCharacterEditorViewNew: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    
+
     let character: Character?
     let story: Story
-    
+
     @State private var name: String = ""
     @State private var description: String = ""
     @State private var avatarURL: String = ""
@@ -15,51 +20,22 @@ struct StoryCharacterEditorViewNew: View {
     @State private var showingFullScreenImage = false
     @State private var isGeneratingAvatar = false
     @State private var errorMessage: String?
-    
+
     init(character: Character? = nil, story: Story) {
-        print("StoryCharacterEditorViewNew init")
-        print("Character passed in: \(String(describing: character))")
-        print("Character name: \(String(describing: character?.name))")
-        print("Character objectID: \(String(describing: character?.objectID))")
-        print("Story: \(String(describing: story))")
-        
         self.character = character
         self.story = story
-        
-        // Initialize state with character values if available
-        if let character = character {
-            print("Initializing with existing character")
-            print("Character details:")
-            print("- name: \(character.name ?? "nil")")
-            print("- description: \(character.characterDescription ?? "nil")")
-            print("- avatarURL: \(character.avatarURL ?? "nil")")
-            print("- intelligence: \(character.intelligence)")
-            print("- isUserCharacter: \(character.isUserCharacter)")
-            print("- stories count: \(character.stories?.count ?? 0)")
-            
-            // Initialize state directly in init
-            _name = State(initialValue: character.name ?? "")
-            _description = State(initialValue: character.characterDescription ?? "")
-            _avatarURL = State(initialValue: character.avatarURL ?? "")
-            _intelligence = State(initialValue: character.intelligence)
-        } else {
-            print("Initializing for new character")
-            // Initialize with empty values for new character
-            _name = State(initialValue: "")
-            _description = State(initialValue: "")
-            _avatarURL = State(initialValue: "")
-            _intelligence = State(initialValue: 5)
-        }
     }
-    
+
     var body: some View {
         NavigationView {
             Form {
+                // MARK: Basic Information
                 Section(header: Text("Basic Information")) {
                     TextField("Name", text: $name)
                     TextField("Description", text: $description)
                 }
-                
+
+                // MARK: Character Image
                 Section(header: Text("Character Image")) {
                     if !avatarURL.isEmpty {
                         AsyncImage(url: URLUtils.createURL(from: avatarURL)) { phase in
@@ -85,15 +61,23 @@ struct StoryCharacterEditorViewNew: View {
                         Text("No image available")
                             .foregroundColor(.gray)
                     }
-                    
-                    Button(action: {
-                        generateAvatar()
-                    }) {
+
+                    Button(action: generateAvatar) {
                         Label("Generate Avatar", systemImage: "wand.and.stars")
                     }
                     .disabled(description.isEmpty || isGeneratingAvatar)
+
+                    if isGeneratingAvatar {
+                        ProgressView()
+                    }
+                    if let error = errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
                 }
-                
+
+                // MARK: Intelligence Level
                 Section(header: Text("Intelligence Level")) {
                     VStack {
                         HStack {
@@ -102,43 +86,25 @@ struct StoryCharacterEditorViewNew: View {
                             Text(intelligenceText)
                                 .foregroundColor(intelligenceColor)
                         }
-                        
-                        Slider(value: Binding(
-                            get: { Double(intelligence) },
-                            set: { intelligence = Int16($0) }
-                        ), in: 1...10, step: 1)
-                    }
-                }
-                
-                if isGeneratingAvatar {
-                    Section {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                            Spacer()
-                        }
-                    }
-                }
-                
-                if let error = errorMessage {
-                    Section {
-                        Text(error)
-                            .foregroundColor(.red)
-                            .font(.caption)
+                        Slider(
+                            value: Binding(
+                                get: { Double(intelligence) },
+                                set: { intelligence = Int16($0) }
+                            ),
+                            in: 1...10, step: 1
+                        )
                     }
                 }
             }
             .navigationTitle(character == nil ? "New Character" : "Edit Character")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveCharacter()
-                    }
+                    Button("Save", action: saveCharacter)
+                        .disabled(name.isEmpty)
                 }
             }
             .sheet(isPresented: $showingFullScreenImage) {
@@ -146,51 +112,30 @@ struct StoryCharacterEditorViewNew: View {
                     FullScreenImageView(imageURL: url)
                 }
             }
-            .onAppear {
-                if let character = character {
-                    name = character.name ?? ""
-                    description = character.characterDescription ?? ""
-                    avatarURL = character.avatarURL ?? ""
-                    intelligence = character.intelligence
-                }
-            }
+            .onAppear(perform: loadCharacter)
         }
     }
-    
-    private var intelligenceColor: Color {
-        switch intelligence {
-        case 1...3:
-            return .red
-        case 4...6:
-            return .orange
-        case 7...8:
-            return .yellow
-        case 9...10:
-            return .green
-        default:
-            return .blue
+
+    // MARK: – Load / State Setup
+    private func loadCharacter() {
+        if let character = character {
+            name = character.name ?? ""
+            description = character.characterDescription ?? ""
+            avatarURL = character.avatarURL ?? ""
+            intelligence = character.intelligence
+        } else {
+            name = ""
+            description = ""
+            avatarURL = ""
+            intelligence = 5
         }
     }
-    
-    private var intelligenceText: String {
-        switch intelligence {
-        case 1...3:
-            return "Low"
-        case 4...6:
-            return "Medium"
-        case 7...8:
-            return "High"
-        case 9...10:
-            return "Very High"
-        default:
-            return "Unknown"
-        }
-    }
-    
+
+    // MARK: – Avatar Generation
     private func generateAvatar() {
         isGeneratingAvatar = true
         errorMessage = nil
-        
+
         Task {
             do {
                 let characterId = character?.id?.uuidString ?? UUID().uuidString
@@ -198,13 +143,11 @@ struct StoryCharacterEditorViewNew: View {
                     description: description,
                     characterId: characterId
                 )
-                
                 await MainActor.run {
                     avatarURL = url
                     isGeneratingAvatar = false
                 }
             } catch {
-                print("Error generating avatar: \(error)")
                 await MainActor.run {
                     errorMessage = "Failed to generate avatar: \(error.localizedDescription)"
                     isGeneratingAvatar = false
@@ -212,105 +155,81 @@ struct StoryCharacterEditorViewNew: View {
             }
         }
     }
-    
+
+    // MARK: – Save Character
     private func saveCharacter() {
-        if let existingCharacter = character {
-            print("Updating existing character")
-            print("Character before update:")
-            print("- objectID: \(existingCharacter.objectID)")
-            print("- name: '\(existingCharacter.name ?? "nil")'")
-            print("- description: '\(existingCharacter.characterDescription ?? "nil")'")
-            print("- avatarURL: '\(existingCharacter.avatarURL ?? "nil")'")
-            print("- intelligence: \(existingCharacter.intelligence)")
-            print("- isUserCharacter: \(existingCharacter.isUserCharacter)")
-            print("- stories count: \(existingCharacter.stories?.count ?? 0)")
-            
-            // Check if the character is still in the context
-            if existingCharacter.managedObjectContext != nil {
-                // Preserve isUserCharacter value when updating
-                let wasUserCharacter = existingCharacter.isUserCharacter
-                
-                existingCharacter.name = name
-                existingCharacter.characterDescription = description
-                existingCharacter.avatarURL = avatarURL
-                existingCharacter.intelligence = intelligence
-                existingCharacter.isUserCharacter = wasUserCharacter // Keep original value
-                
-                // Only modify story relationship if it's not a user character
-                if !wasUserCharacter {
-                    if !(existingCharacter.stories?.contains(story) ?? false) {
-                        let stories = existingCharacter.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
-                        stories.add(story)
-                        existingCharacter.stories = stories
-                    }
-                }
-                
-                print("Character after update:")
-                print("- objectID: \(existingCharacter.objectID)")
-                print("- name: '\(existingCharacter.name ?? "nil")'")
-                print("- description: '\(existingCharacter.characterDescription ?? "nil")'")
-                print("- avatarURL: '\(existingCharacter.avatarURL ?? "nil")'")
-                print("- intelligence: \(existingCharacter.intelligence)")
-                print("- isUserCharacter: \(existingCharacter.isUserCharacter)")
-                print("- stories count: \(existingCharacter.stories?.count ?? 0)")
-            } else {
-                // Character was removed from context, create a new one
-                print("Character was removed from context, creating a new one")
-                let newCharacter = Character(context: viewContext)
-                newCharacter.id = UUID()
-                newCharacter.name = name
-                newCharacter.characterDescription = description
-                newCharacter.avatarURL = avatarURL
-                newCharacter.intelligence = intelligence
-                newCharacter.isUserCharacter = false
-                
-                // Add to stories relationship
-                let stories = NSMutableSet()
-                stories.add(story)
-                newCharacter.stories = stories
-                
-                print("New character created:")
-                print("- objectID: \(newCharacter.objectID)")
-                print("- name: '\(newCharacter.name ?? "nil")'")
-                print("- description: '\(newCharacter.characterDescription ?? "nil")'")
-                print("- avatarURL: '\(newCharacter.avatarURL ?? "nil")'")
-                print("- intelligence: \(newCharacter.intelligence)")
-                print("- isUserCharacter: \(newCharacter.isUserCharacter)")
-                print("- stories count: \(newCharacter.stories?.count ?? 0)")
+        if let existing = character {
+            let wasUser = existing.isUserCharacter
+            existing.name = name
+            existing.characterDescription = description
+            existing.avatarURL = avatarURL
+            existing.intelligence = intelligence
+            existing.isUserCharacter = wasUser
+            if !wasUser && !(existing.stories?.contains(story) ?? false) {
+                let set = existing.stories?.mutableCopy() as? NSMutableSet ?? NSMutableSet()
+                set.add(story)
+                existing.stories = set
             }
         } else {
-            print("Creating new character")
-            let newCharacter = Character(context: viewContext)
-            newCharacter.id = UUID()
-            newCharacter.name = name
-            newCharacter.characterDescription = description
-            newCharacter.avatarURL = avatarURL
-            newCharacter.intelligence = intelligence
-            newCharacter.isUserCharacter = false // New characters from story editor are never user characters
-            
-            // Add to stories relationship
-            let stories = NSMutableSet()
-            stories.add(story)
-            newCharacter.stories = stories
-            
-            print("New character created:")
-            print("- objectID: \(newCharacter.objectID)")
-            print("- name: '\(newCharacter.name ?? "nil")'")
-            print("- description: '\(newCharacter.characterDescription ?? "nil")'")
-            print("- avatarURL: '\(newCharacter.avatarURL ?? "nil")'")
-            print("- intelligence: \(newCharacter.intelligence)")
-            print("- isUserCharacter: \(newCharacter.isUserCharacter)")
-            print("- stories count: \(newCharacter.stories?.count ?? 0)")
+            let newChar = Character(context: viewContext)
+            newChar.id = UUID()
+            newChar.name = name
+            newChar.characterDescription = description
+            newChar.avatarURL = avatarURL
+            newChar.intelligence = intelligence
+            newChar.isUserCharacter = false
+            let set = NSMutableSet(object: story)
+            newChar.stories = set
         }
-        
+
         do {
             try viewContext.save()
-            print("Character saved successfully")
             dismiss()
         } catch {
-            print("Error saving character: \(error)")
-            print("Error details: \(error.localizedDescription)")
             errorMessage = "Failed to save character: \(error.localizedDescription)"
         }
     }
-} 
+
+    // MARK: – Helpers
+    private var intelligenceColor: Color {
+        switch intelligence {
+        case 1...3: return .red
+        case 4...6: return .orange
+        case 7...8: return .yellow
+        case 9...10: return .green
+        default:     return .blue
+        }
+    }
+
+    private var intelligenceText: String {
+        switch intelligence {
+        case 1...3:  return "Low"
+        case 4...6:  return "Medium"
+        case 7...8:  return "High"
+        case 9...10: return "Very High"
+        default:     return "Unknown"
+        }
+    }
+}
+
+// MARK: – Preview
+
+struct StoryCharacterEditorViewNew_Previews: PreviewProvider {
+    static var previews: some View {
+        let context = PersistenceController.shared.container.viewContext
+        let story = Story(context: context)
+        story.id = UUID()
+        story.title = "Preview Story"
+
+        let character = Character(context: context)
+        character.id = UUID()
+        character.name = "Sample"
+        character.characterDescription = "Sample Desc"
+        character.avatarURL = ""
+        character.intelligence = 5
+        character.isUserCharacter = false
+
+        return StoryCharacterEditorViewNew(character: character, story: story)
+            .environment(\.managedObjectContext, context)
+    }
+}
