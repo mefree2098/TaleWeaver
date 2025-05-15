@@ -34,6 +34,8 @@
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="promptTemplate" optional="YES" attributeType="String"/>
+        <!-- placeholders array for template tokens -->
+        <attribute name="placeholders" optional="YES" attributeType="Transformable" attributeValueClassName="NSArray" usesScalarValueType="NO"/>
         <attribute name="templateDescription" optional="YES" attributeType="String"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="stories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Story" inverseName="template" inverseEntity="Story"/>
