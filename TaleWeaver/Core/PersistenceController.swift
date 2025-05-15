@@ -14,7 +14,13 @@ struct PersistenceController {
 
     init(inMemory: Bool = false) {
         container = NSPersistentContainer(name: "TaleWeaver")
-        
+
+        // Enable lightweight migration
+        if let storeDescription = container.persistentStoreDescriptions.first {
+            storeDescription.setOption(true as NSNumber, forKey: NSMigratePersistentStoresAutomaticallyOption)
+            storeDescription.setOption(true as NSNumber, forKey: NSInferMappingModelAutomaticallyOption)
+        }
+
         if inMemory {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         }
