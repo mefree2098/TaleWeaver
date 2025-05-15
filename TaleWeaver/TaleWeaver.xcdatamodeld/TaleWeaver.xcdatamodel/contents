@@ -19,7 +19,7 @@
         <attribute name="title" optional="YES" attributeType="String"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="characters" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Character" inverseName="stories" inverseEntity="Character"/>
-        <relationship name="prompts" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="StoryPrompt" inverseName="story" inverseEntity="StoryPrompt"/>
+        <relationship name="prompts" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="StoryPrompt" inverseName="story" inverseEntity="StoryPrompt"/>
         <relationship name="template" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="StoryTemplate" inverseName="stories" inverseEntity="StoryTemplate"/>
         <relationship name="userCharacter" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Character" inverseName="userStories" inverseEntity="Character"/>
     </entity>
