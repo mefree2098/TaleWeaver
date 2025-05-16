@@ -153,8 +153,8 @@ struct TemplatePreviewView: View {
             }
             .onAppear {
                 // Generate an example prompt
-                generatedPrompt = TemplateViewModel(context: PersistenceController.shared.container.viewContext)
-                    .generatePrompt(from: template)
+                let tempVM = TemplateViewModel(context: PersistenceController.shared.container.viewContext)
+                generatedPrompt = tempVM.generatePrompt(from: template, context: [:])
             }
         }
     }
