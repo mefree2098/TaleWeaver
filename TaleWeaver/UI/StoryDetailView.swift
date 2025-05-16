@@ -33,7 +33,10 @@ struct StoryDetailView: View {
                         
                         ForEach(story.promptsArray) { prompt in
                             ChatMessageView(prompt: prompt, userCharacter: story.userCharacter)
+                                .transition(.move(edge: .leading).combined(with: .opacity))
                         }
+                    }
++                   .animation(.spring(response: 0.5, dampingFraction: 0.7), value: story.promptsArray.count)
                     }
                 }
                 .padding()

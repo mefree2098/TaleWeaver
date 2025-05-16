@@ -122,8 +122,14 @@ struct StoryEditorView: View {
                     Button(mode == .new ? "Create" : "Save") {
                         saveStory()
                     }
-                    .disabled(title.isEmpty || prompt.isEmpty || (mode == .new && selectedTemplate == nil))
-                    .accessibilityLabel(mode == .new ? "Create story" : "Save story")
+                .disabled(title.isEmpty || prompt.isEmpty || (mode == .new && selectedTemplate == nil))
+                        .accessibilityLabel(mode == .new ? "Create story" : "Save story")
+                }
+                .onChange(of: mode) { _ in /* no-op to pick up change */ }
+                
+                // Haptic and visual feedback on save
+                .onReceive(NotificationCenter.default.publisher(for: .init("StorySaveSuccess"))) { _ in
+                    FeedbackManager.shared.playNotificationFeedback(type: .success)
                 }
             }
             .sheet(isPresented: $showingTemplateSelection) {
@@ -163,6 +169,8 @@ struct StoryEditorView: View {
             
             do {
                 try viewContext.save()
+                // Haptic feedback on save
+                FeedbackManager.shared.playNotificationFeedback(type: .success)
                 dismiss()
             } catch {
                 print("Error saving story: \(error)")
@@ -182,6 +190,8 @@ struct StoryEditorView: View {
             
             do {
                 try viewContext.save()
+                // Haptic feedback on save
+                FeedbackManager.shared.playNotificationFeedback(type: .success)
                 dismiss()
             } catch {
                 print("Error saving story: \(error)")

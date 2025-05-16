@@ -149,6 +149,8 @@ struct StoryCharacterListView: View {
             viewContext.delete(char)
         }
         try? viewContext.save()
+        // Haptic feedback on deletion
+        FeedbackManager.shared.playNotificationFeedback(type: .warning)
     }
 
     private func deleteStoryCharacters(at offsets: IndexSet) {
@@ -160,6 +162,8 @@ struct StoryCharacterListView: View {
             viewContext.delete(char)
         }
         try? viewContext.save()
+        // Haptic feedback on deletion
+        FeedbackManager.shared.playNotificationFeedback(type: .warning)
     }
 
     private func addNewCharacter() {
@@ -180,6 +184,8 @@ struct StoryCharacterListView: View {
         viewContext.delete(char)
         try? viewContext.save()
         selectedCharacter = nil
+        // Haptic feedback on deletion
+        FeedbackManager.shared.playNotificationFeedback(type: .warning)
     }
 }
 
