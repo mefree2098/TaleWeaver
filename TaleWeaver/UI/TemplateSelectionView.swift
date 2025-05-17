@@ -7,8 +7,8 @@ struct TemplateSelectionView: View {
     let onTemplateSelected: (StoryTemplate) -> Void
     
     @State private var searchText = ""
+    // When this optional is non-nil SwiftUI will present the preview sheet.
     @State private var selectedTemplate: StoryTemplate?
-    @State private var showingPreview = false
     
     var filteredTemplates: [StoryTemplate] {
         if searchText.isEmpty {
@@ -27,8 +27,8 @@ struct TemplateSelectionView: View {
                 ForEach(filteredTemplates) { template in
                     TemplateCard(template: template)
                         .onTapGesture {
+                            // Present sheet by assigning the tapped template.
                             selectedTemplate = template
-                            showingPreview = true
                         }
                 }
             }
@@ -42,12 +42,12 @@ struct TemplateSelectionView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingPreview) {
-                if let template = selectedTemplate {
-                    TemplatePreviewView(template: template) { selectedTemplate in
-                        onTemplateSelected(selectedTemplate)
-                        dismiss()
-                    }
+            // Present a sheet whenever selectedTemplate is non-nil.
+            .sheet(item: $selectedTemplate) { template in
+                TemplatePreviewView(template: template) { chosen in
+                    onTemplateSelected(chosen)
+                    // Dismiss both the preview and this selection view.
+                    dismiss()
                 }
             }
         }
