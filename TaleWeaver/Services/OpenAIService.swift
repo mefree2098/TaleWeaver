@@ -50,7 +50,9 @@ class OpenAIService {
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
         // Send via OpenAIQueue for exponential back-off on rate limits
-        return try await OpenAIQueue.shared.enqueue { try await performRequest(request) }
+        return try await OpenAIQueue.shared.enqueue { [self] in
+            try await self.performRequest(request)
+        }
     }
     
     func generateCharacterAvatar(description: String, characterId: String, forceRegenerate: Bool = false) async throws -> String {
@@ -94,7 +96,9 @@ class OpenAIService {
         
         print("⏳ Waiting for OpenAI response...")
         // Send via OpenAIQueue for exponential back-off on rate limits
-        return try await OpenAIQueue.shared.enqueue { try await performImageRequest(request, characterId: characterId) }
+        return try await OpenAIQueue.shared.enqueue { [self] in
+            try await self.performImageRequest(request, characterId: characterId)
+        }
     }
     
     private func getExistingImagePath(for characterId: String) throws -> String? {

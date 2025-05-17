@@ -36,8 +36,7 @@ struct StoryDetailView: View {
                                 .transition(.move(edge: .leading).combined(with: .opacity))
                         }
                     }
-+                   .animation(.spring(response: 0.5, dampingFraction: 0.7), value: story.promptsArray.count)
-                    }
+                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: story.promptsArray.count)
                 }
                 .padding()
             }

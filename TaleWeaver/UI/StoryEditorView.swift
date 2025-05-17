@@ -125,17 +125,18 @@ struct StoryEditorView: View {
                 .disabled(title.isEmpty || prompt.isEmpty || (mode == .new && selectedTemplate == nil))
                         .accessibilityLabel(mode == .new ? "Create story" : "Save story")
                 }
-                .onChange(of: mode) { _ in /* no-op to pick up change */ }
+                // Removed invalid .onChange on ToolbarItem
                 
-                // Haptic and visual feedback on save
-                .onReceive(NotificationCenter.default.publisher(for: .init("StorySaveSuccess"))) { _ in
-                    FeedbackManager.shared.playNotificationFeedback(type: .success)
-                }
+                // end ToolbarItem(s)
+            }
+            // Haptic and visual feedback on save (attached to Form instead of ToolbarItem)
+            .onReceive(NotificationCenter.default.publisher(for: .init("StorySaveSuccess"))) { _ in
+                FeedbackManager.shared.playNotificationFeedback(type: .success)
             }
             .sheet(isPresented: $showingTemplateSelection) {
                 TemplateSelectionView(viewModel: templateViewModel) { template in
                     selectedTemplate = template
-                    let generatedPrompt = templateViewModel.generatePrompt(from: template)
+                    let generatedPrompt = templateViewModel.generatePrompt(from: template, context: [:])
                     prompt = generatedPrompt
                 }
             }
