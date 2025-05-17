@@ -6,7 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+
+
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+
+
 		14A300C72DBEEFA10045718A /* TaleWeaver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TaleWeaver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -32,6 +39,8 @@
 		14A300BE2DBEEFA10045718A = {
 			isa = PBXGroup;
 			children = (
+
+
 				14A300C92DBEEFA10045718A /* TaleWeaver */,
 				14A300C82DBEEFA10045718A /* Products */,
 			);
@@ -119,6 +128,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+
+
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

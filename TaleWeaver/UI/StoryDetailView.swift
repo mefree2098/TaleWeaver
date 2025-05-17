@@ -8,6 +8,7 @@ struct StoryDetailView: View {
     @State private var showingNewPromptSheet = false
     @State private var newMessageText: String = ""
     @State private var isAddingMessage: Bool = false
+    @State private var showingSceneList = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -64,7 +65,11 @@ struct StoryDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button(action: { showingSceneList = true }) {
+                    Image(systemName: "list.bullet.rectangle")
+                }
+                .accessibilityLabel("Manage scenes")
                 Button(action: { showingEditSheet = true }) {
                     Image(systemName: "pencil")
                 }
@@ -73,6 +78,10 @@ struct StoryDetailView: View {
         }
         .sheet(isPresented: $showingEditSheet) {
             StoryEditorView(mode: .edit(story), viewModel: viewModel)
+        }
+        .sheet(isPresented: $showingSceneList) {
+            SceneListView(story: story)
+                .environment(\.managedObjectContext, story.managedObjectContext ?? PersistenceController.shared.container.viewContext)
         }
     }
     
