@@ -12,6 +12,7 @@ struct SceneEditorView: View {
 
     @State private var title: String = ""
     @State private var summary: String = ""
+    @State private var isGenerating = false
 
     init(mode: Mode, viewModel: SceneViewModel) {
         self.mode = mode
@@ -27,8 +28,20 @@ struct SceneEditorView: View {
             Form {
                 Section(header: Text("Details")) {
                     TextField("Title", text: $title)
-                    TextEditor(text: $summary)
-                        .frame(minHeight: 120)
+                    ZStack(alignment: .topTrailing) {
+                        TextEditor(text: $summary)
+                            .frame(minHeight: 160)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.2)))
+                        if isGenerating {
+                            ProgressView()
+                                .padding()
+                        }
+                    }
+                    HStack {
+                        Button("AI: Generate") { generateDescription() }
+                        Button("AI: Improve") { improveDescription() }
+                    }
+                    .disabled(isGenerating || (summary.isEmpty && !title.isEmpty))
                 }
             }
             .navigationTitle(modeTitle)
@@ -47,6 +60,29 @@ struct SceneEditorView: View {
 
     private var modeTitle: String { mode == .new ? "New Scene" : "Edit Scene" }
 
+    private var improveDisabled: Bool { summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    private func generateDescription() {
+        isGenerating = true
+        Task {
+            let base = title.isEmpty ? "a scene" : title
+            if let txt = await viewModel.generateDescription(for: base) {
+                await MainActor.run { summary = txt }
+            }
+            isGenerating = false
+        }
+    }
+
+    private func improveDescription() {
+        isGenerating = true
+        Task {
+            if let txt = await viewModel.generateDescription(for: summary) {
+                await MainActor.run { summary = txt }
+            }
+            isGenerating = false
+        }
+    }
+
     private func save() {
         switch mode {
         case .new:
@@ -54,6 +90,7 @@ struct SceneEditorView: View {
         case .edit(let scene):
             viewModel.updateScene(scene, title: title, summary: summary.isEmpty ? nil : summary)
         }
+        viewModel.refresh()
         dismiss()
     }
 }

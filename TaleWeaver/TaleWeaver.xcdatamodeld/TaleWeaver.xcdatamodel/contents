@@ -9,7 +9,7 @@
         <attribute name="isUserCharacter" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="scenes" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Scene" inverseName="characters" inverseEntity="Scene"/>
+        <relationship name="scenes" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Scene"/>
         <relationship name="stories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Story" inverseName="characters" inverseEntity="Story"/>
         <relationship name="userStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Story" inverseName="userCharacter" inverseEntity="Story"/>
     </entity>
@@ -19,7 +19,8 @@
         <attribute name="summary" optional="YES" attributeType="String"/>
         <attribute name="title" optional="YES" attributeType="String"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="characters" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Character" inverseName="scenes" inverseEntity="Character"/>
+        <relationship name="characters" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="StoryPrompt"/>
+        <relationship name="prompts" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="StoryPrompt" inverseName="scene" inverseEntity="StoryPrompt"/>
         <relationship name="story" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="Story" inverseName="scenes" inverseEntity="Story"/>
     </entity>
     <entity name="Story" representedClassName="Story" syncable="YES" codeGenerationType="class">
@@ -38,6 +39,7 @@
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="promptText" optional="YES" attributeType="String"/>
+        <relationship name="scene" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Scene" inverseName="prompts" inverseEntity="Scene"/>
         <relationship name="story" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Story" inverseName="prompts" inverseEntity="Story"/>
     </entity>
     <entity name="StoryTemplate" representedClassName=".StoryTemplate" syncable="YES">

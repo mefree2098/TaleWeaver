@@ -69,9 +69,20 @@ struct StoryEditorView: View {
                 }
                 
                 Section(header: Text("Content")) {
-                    TextEditor(text: $content)
-                        .frame(minHeight: 200)
-                        .accessibilityLabel("Story content")
+                    ZStack(alignment: .topTrailing) {
+                        TextEditor(text: $content)
+                            .frame(minHeight: 220)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.2)))
+                        if isGenerating {
+                            ProgressView().padding()
+                        }
+                    }
+                    HStack {
+                        Button("AI Generate Story") { generateStory() }
+                        Button("AI Improve Story") { improveStory() }
+                    }
+                    .disabled(isGenerating || title.isEmpty)
+                    .accessibilityLabel("Story content")
                 }
                 
                 Section(header: Text("Characters")) {
@@ -157,6 +168,34 @@ struct StoryEditorView: View {
         }
     }
     
+    // MARK: – AI Helpers
+    private func generateStory() {
+        isGenerating = true
+        Task {
+            do {
+                let txt = try await viewModel.openAIService.generateStory(prompt: prompt.isEmpty ? title : prompt)
+                await MainActor.run { content = txt; isGenerating = false }
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    isGenerating = false
+                }
+            }
+        }
+    }
+    private func improveStory() {
+        guard !content.isEmpty else { return }
+        isGenerating = true
+        Task {
+            do {
+                let txt = try await viewModel.openAIService.generateStory(prompt: "Improve the following story: \n\n" + content)
+                await MainActor.run { content = txt; isGenerating = false }
+            } catch {
+                await MainActor.run { errorMessage = error.localizedDescription; isGenerating = false }
+            }
+        }
+    }
+
     private func saveStory() {
         if case .edit(let story) = mode {
             story.title = title

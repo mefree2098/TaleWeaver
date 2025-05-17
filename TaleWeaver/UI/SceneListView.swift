@@ -10,15 +10,28 @@ struct SceneListView: View {
     @State private var editorMode: SceneEditorView.Mode = .new
     @State private var selectedScene: Scene?
 
+    private let parentStory: Story
     init(story: Story) {
+        self.parentStory = story
         let repo = SceneRepository(context: story.managedObjectContext ?? PersistenceController.shared.container.viewContext)
         _viewModel = StateObject(wrappedValue: SceneViewModel(story: story, repository: repo))
     }
 
     var body: some View {
         List {
+            if viewModel.scenes.isEmpty {
+                VStack(alignment: .center) {
+                    Text("No scenes yet")
+                        .foregroundColor(.secondary)
+                    Button(action: createScene) {
+                        Label("Create Scene", systemImage: "plus")
+                    }
+                    .padding(.top, 8)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+            }
             ForEach(viewModel.scenes, id: \.objectID) { scene in
-                Button(action: { openEditor(scene) }) {
+                NavigationLink(destination: SceneDetailView(scene: scene, story: parentStory)) {
                     VStack(alignment: .leading) {
                         Text(scene.title ?? "Untitled")
                             .font(.headline)
@@ -28,6 +41,9 @@ struct SceneListView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
+                }
+                .swipeActions(edge: .trailing) {
+                    Button("Edit") { openEditor(scene) }
                 }
             }
             .onDelete(perform: deleteScenes)

@@ -18,6 +18,18 @@ final class SceneViewModel: ObservableObject {
         refresh()
     }
 
+    // MARK: AI helpers
+
+    func generateDescription(for prompt: String) async -> String? {
+        do {
+            let txt = try await OpenAIService.shared.generateStory(prompt: "Generate a vivid scene description: \(prompt)")
+            return txt.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch {
+            await MainActor.run { self.errorMessage = error.localizedDescription }
+            return nil
+        }
+    }
+
     // MARK: Intents
 
     func refresh() {
@@ -49,6 +61,8 @@ final class SceneViewModel: ObservableObject {
         do {
             try repository.save()
             refresh()
+            // Notify observers of parent story so StoryDetailView refreshes its scenes list
+            story.objectWillChange.send()
         } catch {
             errorMessage = "Failed to save: \(error.localizedDescription)"
         }
