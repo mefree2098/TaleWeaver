@@ -6,7 +6,7 @@ import Combine
 final class SceneViewModel: ObservableObject {
     // Input
     private let repository: SceneRepository
-    private let story: Story
+    let story: Story
 
     // Output
     @Published private(set) var scenes: [Scene] = []
@@ -22,7 +22,7 @@ final class SceneViewModel: ObservableObject {
 
     func generateDescription(for prompt: String) async -> String? {
         do {
-            let txt = try await OpenAIService.shared.generateStory(prompt: "Generate a vivid scene description: \(prompt)")
+            let txt = try await OpenAIService.shared.generateSceneDescription(theme: prompt)
             return txt.trimmingCharacters(in: .whitespacesAndNewlines)
         } catch {
             await MainActor.run { self.errorMessage = error.localizedDescription }
@@ -40,9 +40,11 @@ final class SceneViewModel: ObservableObject {
         }
     }
 
-    func addScene(title: String, summary: String?) {
-        _ = repository.createScene(for: story, title: title, summary: summary)
+    @discardableResult
+    func addScene(title: String, summary: String?) -> Scene {
+        let scene = repository.createScene(for: story, title: title, summary: summary)
         persistChanges()
+        return scene
     }
 
     func updateScene(_ scene: Scene, title: String, summary: String?) {
@@ -52,6 +54,17 @@ final class SceneViewModel: ObservableObject {
 
     func deleteScene(_ scene: Scene) {
         repository.deleteScene(scene)
+        persistChanges()
+    }
+
+    // MARK: Move / Reorder
+    func moveScenes(from source: IndexSet, to destination: Int) {
+        scenes.move(fromOffsets: source, toOffset: destination)
+        // Re-stamp createdAt so CoreData fetch order persists
+        let baseDate = Date()
+        for (idx, sc) in scenes.enumerated() {
+            sc.createdAt = baseDate.addingTimeInterval(Double(idx))
+        }
         persistChanges()
     }
 

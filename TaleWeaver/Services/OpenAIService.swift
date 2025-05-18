@@ -11,7 +11,12 @@ enum OpenAIError: Error {
 }
 
 class OpenAIService {
-    static let shared = OpenAIService(apiKey: UserDefaults.standard.string(forKey: "openAIAPIKey") ?? "")
+    static var shared = OpenAIService(apiKey: UserDefaults.standard.string(forKey: "openAIAPIKey") ?? "")
+    /// Call after user updates key to re-initialise singleton
+    static func configure(apiKey: String) {
+        shared = OpenAIService(apiKey: apiKey)
+        UserDefaults.standard.set(apiKey, forKey: "openAIAPIKey")
+    }
     
     private let apiKey: String
     private let baseURL = "https://api.openai.com/v1"
@@ -26,33 +31,35 @@ class OpenAIService {
         self.fileManager = FileManager.default
     }
     
+    // MARK: - Text Generation
+
+    /// Generic text generation helper
+    /// - Parameter prompt: User prompt / instructions
+    /// - Returns: Generated text from the model
     func generateStory(prompt: String) async throws -> String {
-        guard !apiKey.isEmpty else {
-            throw OpenAIError.invalidAPIKey
-        }
-        
-        let endpoint = "\(baseURL)/chat/completions"
+        guard !apiKey.isEmpty else { throw OpenAIError.invalidAPIKey }
+
+        let endpoint = "\(baseURL)/responses"
         var request = URLRequest(url: URL(string: endpoint)!)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         let requestBody: [String: Any] = [
             "model": "o4-mini",
-            "messages": [
-                ["role": "system", "content": "You are a creative storyteller."],
-                ["role": "user", "content": prompt]
-            ],
-            "temperature": 0.7,
-            "max_tokens": 1000
+            "input": prompt
         ]
-        
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-        
-        // Send via OpenAIQueue for exponential back-off on rate limits
+
         return try await OpenAIQueue.shared.enqueue { [self] in
-            try await self.performRequest(request)
+            try await performTextRequest(request)
         }
+    }
+
+    /// Dedicated wrapper for generating a scene description.
+    func generateSceneDescription(theme: String) async throws -> String {
+        let fullPrompt = "Generate a vivid scene description: \(theme)"
+        return try await generateStory(prompt: fullPrompt)
     }
     
     func generateCharacterAvatar(description: String, characterId: String, forceRegenerate: Bool = false) async throws -> String {
@@ -156,22 +163,47 @@ class OpenAIService {
         }
     }
     
-    private func performRequest(_ request: URLRequest) async throws -> String {
+    // MARK: - New Responses API decoding
+    private struct ResponsesEnvelope: Codable {
+        let output_text: String
+    }
+    private struct OutputBlock: Codable {
+        struct Content: Codable { let text: String? }
+        let content: [Content]?
+    }
+    private struct GenericEnvelope: Codable { let output: [OutputBlock] }
+
+    private func parseOutputArray(_ data: Data) throws -> String {
+        let generic = try decoder.decode(GenericEnvelope.self, from: data)
+        let texts = generic.output
+            .flatMap { ($0.content ?? []).compactMap { $0.text } }
+        guard !texts.isEmpty else { throw OpenAIError.invalidResponse }
+        return texts.joined(separator: "\n")
+    }
+
+    private func performTextRequest(_ request: URLRequest) async throws -> String {
         var retryCount = 0
         let maxRetries = 3
-        
+
         while true {
             do {
                 let (data, response) = try await session.data(for: request)
-                
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    throw OpenAIError.invalidResponse
-                }
-                
+                guard let httpResponse = response as? HTTPURLResponse else { throw OpenAIError.invalidResponse }
+
                 switch httpResponse.statusCode {
                 case 200:
-                    let result = try decoder.decode(OpenAIResponse.self, from: data)
-                    return result.choices.first?.message.content ?? ""
+                    if let envelope = try? decoder.decode(ResponsesEnvelope.self, from: data) {
+                        return envelope.output_text
+                    } else if let fallbackText = try? parseOutputArray(data) {
+                        return fallbackText
+                    } else {
+    #if DEBUG
+                        if let raw = String(data: data, encoding: .utf8) {
+                            print("[OpenAI] ⚠️ Unexpected 200 payload:\n\(raw)")
+                        }
+    #endif
+                        throw OpenAIError.invalidResponse
+                    }
                     
                 case 401:
                     throw OpenAIError.invalidAPIKey

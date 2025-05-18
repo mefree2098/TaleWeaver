@@ -68,32 +68,48 @@ struct StoryCharacterListView: View {
 
     var body: some View {
         NavigationView {
-            List {
-                // User Characters Section
-                Section(header: Text("User Characters")) {
-                    ForEach(filteredUserCharacters, id: \.objectID) { char in
-                        UserCharacterRow(
-                            character: char,
-                            story: story,
-                            assignAction: assignCharacter(_:),
-                            removeAction: removeCharacter(_:)
-                        )
+            Group {
+                if userCharacters.isEmpty && storyCharacters.isEmpty {
+                    VStack(spacing: 16) {
+                        Spacer()
+                        Image(systemName: "person.crop.circle.badge.plus")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray)
+                        Text("No characters yet")
+                            .foregroundColor(.secondary)
+                        Button(action: addNewCharacter) {
+                            Label("Add Character", systemImage: "plus")
+                        }
+                        Spacer()
                     }
-                    .onDelete(perform: deleteUserCharacters)
-                }
+                } else {
+                    List {
+                        // User Characters Section
+                        Section(header: Text("User Characters")) {
+                            ForEach(filteredUserCharacters, id: \.objectID) { char in
+                                UserCharacterRow(
+                                    character: char,
+                                    story: story,
+                                    assignAction: assignCharacter(_:),
+                                    removeAction: removeCharacter(_:)
+                                )
+                            }
+                            .onDelete(perform: deleteUserCharacters)
+                        }
 
-                // Story Characters Section
-                Section(header: Text("Story Characters")) {
-                    ForEach(filteredStoryCharacters, id: \.objectID) { char in
-                        StoryCharacterRow(
-                            character: char,
-                            editAction: { editCharacter(char) }
-                        )
+                        // Story Characters Section
+                        Section(header: Text("Story Characters")) {
+                            ForEach(filteredStoryCharacters, id: \.objectID) { char in
+                                StoryCharacterRow(
+                                    character: char,
+                                    editAction: { editCharacter(char) }
+                                )
+                            }
+                            .onDelete(perform: deleteStoryCharacters)
+                        }
                     }
-                    .onDelete(perform: deleteStoryCharacters)
                 }
             }
-            .listStyle(.insetGrouped)
             .searchable(text: $searchText, prompt: "Search characters")
             .navigationTitle("Characters")
             .navigationBarTitleDisplayMode(.inline)

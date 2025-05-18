@@ -20,6 +20,7 @@ struct SettingsView: View {
                         .textContentType(.password)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
+                        .onChange(of: apiKey) { OpenAIService.configure(apiKey: $0) }
                 }
                 
                 Section(header: Text("User Character")) {

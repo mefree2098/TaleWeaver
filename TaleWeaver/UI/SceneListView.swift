@@ -47,7 +47,9 @@ struct SceneListView: View {
                 }
             }
             .onDelete(perform: deleteScenes)
+            .onMove(perform: viewModel.moveScenes)
         }
+        .environment(\.editMode, .constant(.active)) // enable drag
         .navigationTitle("Scenes")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

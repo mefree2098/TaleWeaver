@@ -13,6 +13,7 @@ struct SceneEditorView: View {
     @State private var title: String = ""
     @State private var summary: String = ""
     @State private var isGenerating = false
+    @State private var selectedCharacters: Set<Character> = []
 
     init(mode: Mode, viewModel: SceneViewModel) {
         self.mode = mode
@@ -20,6 +21,7 @@ struct SceneEditorView: View {
         if case .edit(let scene) = mode {
             _title = State(initialValue: scene.title ?? "")
             _summary = State(initialValue: scene.summary ?? "")
+            _selectedCharacters = State(initialValue: Set(scene.story?.characters as? Set<Character> ?? []))
         }
     }
 
@@ -42,6 +44,14 @@ struct SceneEditorView: View {
                         Button("AI: Improve") { improveDescription() }
                     }
                     .disabled(isGenerating || (summary.isEmpty && !title.isEmpty))
+                }
+
+                Section(header: Text("Characters in Scene")) {
+                    ForEach(allCharacters, id: \.objectID) { char in
+                        MultipleSelectionRow(title: char.name ?? "", isSelected: selectedCharacters.contains(char)) {
+                            toggleSelection(char)
+                        }
+                    }
                 }
             }
             .navigationTitle(modeTitle)
@@ -73,6 +83,21 @@ struct SceneEditorView: View {
         }
     }
 
+    // MARK: Character helpers
+    private var allCharacters: [Character] {
+        let set = viewModel.story.characters as? Set<Character> ?? []
+        return set.sorted { ($0.name ?? "") < ($1.name ?? "") }
+    }
+
+    private func toggleSelection(_ char: Character) {
+        if selectedCharacters.contains(char) {
+            selectedCharacters.remove(char)
+        } else {
+            selectedCharacters.insert(char)
+        }
+    }
+
+    // MARK: AI
     private func improveDescription() {
         isGenerating = true
         Task {
@@ -84,14 +109,33 @@ struct SceneEditorView: View {
     }
 
     private func save() {
+        let originalChars = Set(viewModel.story.characters as? Set<Character> ?? [])
+        let newChars = selectedCharacters.subtracting(originalChars)
+
         switch mode {
         case .new:
-            viewModel.addScene(title: title, summary: summary.isEmpty ? nil : summary)
+            let scene = viewModel.addScene(title: title, summary: summary.isEmpty ? nil : summary)
+            attachCharacters(newChars, to: scene)
         case .edit(let scene):
             viewModel.updateScene(scene, title: title, summary: summary.isEmpty ? nil : summary)
+            attachCharacters(newChars, to: scene)
         }
         viewModel.refresh()
         dismiss()
+    }
+
+    private func attachCharacters(_ chars: Set<Character>, to scene: Scene) {
+        guard !chars.isEmpty else { return }
+        for char in chars {
+            insertSystemPrompt(text: "\(char.name ?? "Character") enters the scene.", into: scene)
+        }
+        try? ctx.save()
+    }
+
+    private func insertSystemPrompt(text: String, into scene: Scene) {
+        let prompt = StoryPrompt(context: ctx)
+        prompt.id = UUID(); prompt.createdAt = Date(); prompt.promptText = text
+        prompt.scene = scene; prompt.story = viewModel.story
     }
 }
 

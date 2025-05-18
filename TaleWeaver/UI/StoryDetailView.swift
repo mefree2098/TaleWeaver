@@ -3,11 +3,15 @@ import CoreData
 
 /// Shows a story’s scenes (no chat UI at this level).
 struct StoryDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+    
     @ObservedObject var story: Story
     @ObservedObject var viewModel: StoryViewModel
 
     @State private var showingEditSheet = false
     @State private var showingSceneList = false
+
+    @State private var showingDeleteAlert = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -61,8 +65,19 @@ struct StoryDetailView: View {
                     Image(systemName: "pencil")
                 }
                 .accessibilityLabel("Edit story")
+
+                Button(role: .destructive) { showingDeleteAlert = true } label: {
+                    Image(systemName: "trash")
+                }
+                .accessibilityLabel("Delete story")
             }
         }
+        .alert("Delete Story", isPresented: $showingDeleteAlert, actions: {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) { deleteStory() }
+        }, message: {
+            Text("This will permanently delete the story and all related scenes.")
+        })
         .sheet(isPresented: $showingEditSheet) {
             StoryEditorView(mode: .edit(story), viewModel: viewModel)
         }
@@ -73,6 +88,14 @@ struct StoryDetailView: View {
                                   story.managedObjectContext ?? PersistenceController.shared.container.viewContext)
             }
         }
+    }
+
+    // MARK: Delete Story
+    private func deleteStory() {
+        let ctx = story.managedObjectContext ?? PersistenceController.shared.container.viewContext
+        ctx.delete(story)
+        try? ctx.save()
+        dismiss()
     }
 }
 
