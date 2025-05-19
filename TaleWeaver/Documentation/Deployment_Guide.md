@@ -27,6 +27,29 @@ Alternatively, for automation (CI or environment variables), set a build setting
 1. Select your target device or simulator
 2. Click the Run button (▶️) or press Cmd+R
 
+## Application Flow Overview
+
+1. **Settings**
+   - Enter your OpenAI API key.
+   - Create one or more *user characters* that represent you.
+   - These user characters can be assigned to any story, but only one may be active per story.
+
+2. **Create a Story**
+   - Choose a template for AI-generated titles, descriptions, and characters, or provide your own details.
+   - You may mix and match manual input with AI generation.
+   - Assign the user character that will represent you in the story.
+
+3. **Create the First Scene**
+   - Pick which characters appear, set a title, and add a short description.
+   - Optionally let the AI fill in missing details and generate an illustrative image for the scene list.
+
+4. **Scene Interaction**
+   - Chat with characters using dialogue, narration (`"text"`), or actions (`*action*`). Mention a character with `@Name`.
+   - End the scene when complete or tap **Back** to return without closing it.
+
+5. **Continue Story**
+   - From the scene list you can create new scenes or revisit existing ones to continue chatting.
+
 ## TestFlight & App Store Distribution
 
 ### Create an Archive
