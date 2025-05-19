@@ -5,38 +5,38 @@ All notable changes to TaleWeaver will be documented in this file.
 ## TODO – Next Steps (Scenes & AI integration) – 2025-05-18
 
 ### 0 Delete Capabilty
--   Add ability in UI )to delete scenes, stories, and user characters.
+- [x] Add ability in UI to delete scenes, stories, and user characters.
 
 ### 1 Scene Workflow
-- **SceneListView** refreshes after save; remaining
+- [x] **SceneListView** refreshes after save; remaining
   - Optional drag-to-reorder scenes
-- **SceneDetailView**
+- [x] **SceneDetailView**
   1. Toolbar “Add Character” opens picker and inserts system prompt “<Name> enters the scene>”.
   2. Show active-character chips / avatars at top.
   3. Ability to remove a character (optional).
-- **SceneEditorView**
+- [x] **SceneEditorView**
   - Multi-select character assignment when creating / editing a scene.
 
 ### 2 Character Workflow
-- **StoryCharacterListView**
+- [x] **StoryCharacterListView**
   - When both user & story sections are empty show placeholder with “+ Add Character” button.
 
 ### 3 AI / OpenAI
-- Surface `OpenAIError.apiError(message)` to user.
-- Add dedicated `generateSceneDescription(theme:)` wrapper (currently re-uses `generateStory`).
+- [x] Surface `OpenAIError.apiError(message)` to user.
+- [x] Add dedicated `generateSceneDescription(theme:)` wrapper (currently re-uses `generateStory`).
 
 ### 4 Core Data / Migration
-- Optional debug toggle: wipe store automatically when migration fails (dev builds only).
-- Consider background context for chat message inserts to avoid UI hitch.
+- [x] Optional debug toggle: wipe store automatically when migration fails (dev builds only).
+- [x] Consider background context for chat message inserts to avoid UI hitch.
 
 ### 5 UI & Accessibility
-- Resolve system keyboard accessory AutoLayout warnings.
-- Dark-mode review of new views.
+- [x] Resolve system keyboard accessory AutoLayout warnings.
+- [x] Dark-mode review of new views.
 
 ### 6 Cleanup / Tests
-- Remove unused chat code from StoryDetailView.
-- Extract `ChatMessageView` into its own file.
-- Unit tests for `SceneRepository` and `SceneViewModel`.
+- [x] Remove unused chat code from StoryDetailView.
+- [x] Extract `ChatMessageView` into its own file.
+- [x] Unit tests for `SceneRepository` and `SceneViewModel`.
 
 ## [1.0.0] - 2025-05-15
 ### Added
