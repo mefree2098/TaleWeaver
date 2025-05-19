@@ -34,9 +34,9 @@ All notable changes to TaleWeaver will be documented in this file.
 - Dark-mode review of new views.
 
 ### 6 Cleanup / Tests
-- Remove unused chat code from StoryDetailView.
-- Extract `ChatMessageView` into its own file.
-- Unit tests for `SceneRepository` and `SceneViewModel`.
+- [x] Remove unused chat code from StoryDetailView.
+- [x] Extract `ChatMessageView` into its own file.
+- [ ] Unit tests for `SceneRepository` and `SceneViewModel`.
 
 ## [1.0.0] - 2025-05-15
 ### Added
