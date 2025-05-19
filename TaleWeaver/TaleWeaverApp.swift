@@ -20,8 +20,8 @@ struct TaleWeaverApp: App {
         _viewModel = StateObject(wrappedValue: StoryViewModel(repository: repository, openAIService: openAIService))
     }
     
-    var body: some Scene {
-        WindowGroup {
+    var body: some SwiftUI.Scene {
+        SwiftUI.WindowGroup {
             StoryListView(viewModel: viewModel)
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }

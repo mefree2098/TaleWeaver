@@ -28,4 +28,4 @@ extension StoryTemplate {
 
     @objc(removeStories:)
     @NSManaged public func removeFromStories(_ values: NSSet)
-} 
+}

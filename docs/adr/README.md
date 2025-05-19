@@ -28,9 +28,13 @@ This directory contains Architecture Decision Records for the TaleWeaver project
 
 ## ADR List
 - ADR-001: Initial Project Architecture
-  - Status: Proposed
-  - Date: YYYY-MM-DD
+  - Status: Accepted
+  - Date: 2025-05-15
   - Focus: Core architecture decisions
+- ADR-002: Template Engine v1
+  - Status: Accepted
+  - Date: 2025-05-15
+  - Focus: Placeholder-based template rendering engine
 
 ## ADR Guidelines
 1. Each ADR should have a unique identifier

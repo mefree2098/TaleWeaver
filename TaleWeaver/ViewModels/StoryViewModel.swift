@@ -4,8 +4,8 @@ import SwiftUI
 
 @MainActor
 class StoryViewModel: ObservableObject {
-    private let repository: StoryRepositoryProtocol
-    private let openAIService: OpenAIService
+    let repository: StoryRepositoryProtocol
+    let openAIService: OpenAIService
     
     @Published var stories: [Story] = []
     @Published var isLoading = false

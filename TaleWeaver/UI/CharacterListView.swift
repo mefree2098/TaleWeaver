@@ -50,6 +50,8 @@ struct CharacterListView: View {
             let character = filteredCharacters[index]
             viewModel.deleteCharacter(character)
         }
+        // Haptic feedback on deletion
+        FeedbackManager.shared.playNotificationFeedback(type: .warning)
     }
 }
 
